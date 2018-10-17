@@ -232,7 +232,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    nErr = sendCommand(":MountInfo#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":MountInfo#", szResp, 4);
     if(nErr)
         return nErr;
 
@@ -298,14 +298,14 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    nErr = sendCommand(":FW1#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":FW1#", szResp, 13);
     if(nErr)
         return nErr;
 
     sFirmwares+= szResp;
     sFirmwares+= " ";
 
-    nErr = sendCommand(":FW2#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":FW2#", szResp, 13);
     if(nErr)
         return nErr;
     sFirmwares+= szResp;
@@ -396,7 +396,7 @@ int CiOptron::startSlewTo(double dRa, double dDec)
 }
 
 
-int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate)
+int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate) // todo: not trivial how to slew in V3
 {
     int nErr = IOPTRON_OK;
     char szCmd[SERIAL_BUFFER_SIZE];
@@ -520,9 +520,9 @@ int CiOptron::gotoPark(double dRa, double dDec)
     // set park position ?
     // or goto ?
     // goto park
-    nErr = sendCommand("!GTop;", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":MP1#", szResp, 1);  // merely ask to park
 
-    return nErr;
+    return nErr; // todo: szResp says '1' or '0' for accepted or failed
 }
 
 int CiOptron::markParkPosition()
