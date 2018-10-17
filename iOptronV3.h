@@ -133,8 +133,8 @@ private:
     // limits don't change mid-course so we cache them
     bool    m_bLimitCached;
     
-    int     sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen);
-    int     readResponse( char *szRespBuffer, int nBufferLen);
+    int     sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen = SERIAL_BUFFER_SIZE);
+    int     readResponse( char *szRespBuffer, int nBufferLen, int nResultLen = SERIAL_BUFFER_SIZE);
     int     parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
 
     const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "ViewVel 1", "ViewVel 2", "ViewVel 3", "ViewVel 4",  "Slew"};

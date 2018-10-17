@@ -130,7 +130,7 @@ int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMa
 
 
 
-int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen)
+int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -152,7 +152,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
         return nErr;
 
     // read response
-    nErr = readResponse(szResp, nResultMaxLen);
+    nErr = readResponse(szResp, nResultMaxLen, nExpectedResultLen);
     if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         ltime = time(NULL);
@@ -177,7 +177,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
     return nErr;
 }
 
-int CiOptron::readResponse(char *szRespBuffer, int nBufferLen)
+int CiOptron::readResponse(char *szRespBuffer, int nBufferLen, int nResultLen)
 {
     int nErr = IOPTRON_OK;
     unsigned long ulBytesRead = 0;
@@ -213,7 +213,9 @@ int CiOptron::readResponse(char *szRespBuffer, int nBufferLen)
             break;
         }
         ulTotalBytesRead += ulBytesRead;
-    } while (*pszBufPtr++ != '#' && ulTotalBytesRead < nBufferLen );
+        if(ulTotalBytesRead == nResultLen)
+            break;
+    } while ( *pszBufPtr++ != '#' && ulTotalBytesRead < nBufferLen  );
 
     if(ulTotalBytesRead && *(pszBufPtr-1) == '#')
         *(pszBufPtr-1) = 0; //remove the #
@@ -232,7 +234,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    nErr = sendCommand(":MountInfo#", szResp, 4);
+    nErr = sendCommand(":MountInfo#", szResp, SERIAL_BUFFER_SIZE, 4);
     if(nErr)
         return nErr;
 
@@ -298,14 +300,14 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    nErr = sendCommand(":FW1#", szResp, 13);
+    nErr = sendCommand(":FW1#", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
 
     sFirmwares+= szResp;
     sFirmwares+= " ";
 
-    nErr = sendCommand(":FW2#", szResp, 13);
+    nErr = sendCommand(":FW2#", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
     sFirmwares+= szResp;
@@ -516,11 +518,21 @@ int CiOptron::gotoPark(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    int nParkResult;
 
     // set park position ?
-    // or goto ?
+    // RP : we probably need to set the mount park position from the settings dialog. I'll look into it.
+    //      from the doc : "This command parks to the most recently defined parking position" ... so we need to define it
+    //      if it's not already define (and saved) in the mount
+    // or goto ?    // RP : Goto and Park should be different.
     // goto park
-    nErr = sendCommand(":MP1#", szResp, 1);  // merely ask to park
+    nErr = sendCommand(":MP1#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to park
+    if(nErr)
+        return nErr;
+
+    nParkResult = atoi(szResp);
+    if(nParkResult != 1)
+        return ERR_CMDFAILED;
 
     return nErr; // todo: szResp says '1' or '0' for accepted or failed
 }
@@ -529,8 +541,15 @@ int CiOptron::markParkPosition()
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    int nParkResult;
 
-    nErr = sendCommand("!AMpp;", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":MP0#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    if(nErr)
+        return nErr;
+
+    nParkResult = atoi(szResp);
+    if(nParkResult != 1)
+        return ERR_CMDFAILED;
 
     return nErr;
 
