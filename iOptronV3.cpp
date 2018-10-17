@@ -6,7 +6,7 @@ CiOptron::CiOptron()
 
 	m_bIsConnected = false;
 
-    m_bDebugLog = true;
+    m_bParked = true;
     m_bLimitCached = false;
 
 #ifdef IOPTRON_DEBUG
@@ -76,6 +76,8 @@ int CiOptron::Connect(char *pszPort)
     if(nErr)
         m_bIsConnected = false;
 
+    // get more info and status
+    getInfoAndSettings();
     return nErr;
 }
 
