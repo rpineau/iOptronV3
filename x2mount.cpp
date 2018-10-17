@@ -809,52 +809,35 @@ bool X2Mount::isParked(void)
 
 int X2Mount::startPark(const double& dAz, const double& dAlt)
 {
-	double dRa, dDec;
 	int nErr = SB_OK;
 
     if(!m_bLinked)
         return ERR_NOLINK;
 	
 	X2MutexLocker ml(GetMutex());
-
-	nErr = m_pTheSkyXForMounts->HzToEq(dAz, dAlt, dRa, dDec);
-    if (nErr) {
-#ifdef IOPTRON_X2_DEBUG
-        if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] startPark  m_pTheSkyXForMounts->HzToEq nErr = %d \n", timestamp, nErr);
-            fflush(LogFile);
-        }
-#endif
-        return nErr;
-    }
-
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
 		char *timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(LogFile, "[%s] startPark Called. Alt: %f , Az: %f [ Ra: %f , Dec: %f]\n", timestamp, dAz, dAlt, dRa, dDec);
+        fprintf(LogFile, "[%s] startPark Called.\n", timestamp);
         fflush(LogFile);
 	}
 #endif
-    // goto park
-    nErr = m_iOptronV3.gotoPark(dRa, dDec);
-    if(nErr)
+    // Park mount to pre-define park position (in the mount).
+    nErr = m_iOptronV3.parkMount();
+    if(nErr) {
         nErr = ERR_CMDFAILED;
-
 #ifdef IOPTRON_X2_DEBUG
-    if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
-        timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(LogFile, "[%s] startPark  m_iOptronV3.gotoPark nErr = %d \n", timestamp, nErr);
-        fflush(LogFile);
-    }
+        if (LogFile) {
+            time_t ltime = time(NULL);
+            char *timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] startPark  m_iOptronV3.gotoPark nErr = %d \n", timestamp, nErr);
+            fflush(LogFile);
+        }
 #endif
-
+    }
 	return nErr;
 }
 

@@ -51,6 +51,7 @@ enum mountModels {CubeIIEQmode = 0010,
                 iEQ45ProAAmode = 5045
 };
 
+enum iOptronStatus {STOPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 500         // 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
@@ -98,7 +99,7 @@ public:
     int startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate);
     int stopOpenLoopMove();
 
-    int gotoPark(double dRa, double dDEc);
+    int parkMount();
     int markParkPosition();
     int getAtPark(bool &bParked);
     int unPark();
@@ -116,6 +117,12 @@ private:
     LoggerInterface                     *m_pLogger;
     TheSkyXFacadeForDriversInterface    *m_pTsx;
     SleeperInterface                    *m_pSleeper;
+
+    float   m_fLat;
+    float   m_fLong;
+    int     m_nStatus;
+
+    bool    m_bParked;
 
     bool    m_bDebugLog;
     char    m_szLogBuffer[IOPTRON_LOG_BUFFER_SIZE];
@@ -136,6 +143,8 @@ private:
     int     sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen = SERIAL_BUFFER_SIZE);
     int     readResponse( char *szRespBuffer, int nBufferLen, int nResultLen = SERIAL_BUFFER_SIZE);
     int     parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
+
+    int     getInfoAndSettings();
 
     const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "ViewVel 1", "ViewVel 2", "ViewVel 3", "ViewVel 4",  "Slew"};
     const char m_szAlignmentType[IOPTRON_NB_ALIGNEMENT_TYPE][IOPTRON_ALIGNEMENT_NAME_LENGHT] = { "Polar", "AltAz", "NearlyPolar", "NearlyAltAz"};

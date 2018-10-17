@@ -514,7 +514,7 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     return nErr;
 }
 
-int CiOptron::gotoPark(double dRa, double dDec)
+int CiOptron::parkMount()
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -558,13 +558,15 @@ int CiOptron::markParkPosition()
 int CiOptron::getAtPark(bool &bParked)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 
     bParked = false;
-    nErr = sendCommand("!AGak;", szResp, SERIAL_BUFFER_SIZE);
-    if(strncmp(szResp,"Yes",SERIAL_BUFFER_SIZE) == 0) {
-        bParked = true;
-    }
+
+    nErr = getInfoAndSettings();
+    if(nErr)
+        return nErr;
+
+    bParked = m_bParked;
+
     return nErr;
 }
 
@@ -658,6 +660,31 @@ int CiOptron::Abort()
 }
 
 
+int CiOptron::getInfoAndSettings()
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szTmp[SERIAL_BUFFER_SIZE];
+
+    nErr = sendCommand(":GLS#", szResp, SERIAL_BUFFER_SIZE);
+    if(nErr)
+        return nErr;
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp, 9);
+    m_fLong = atof(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp+9, szResp, 9);
+    m_fLat = atof(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp+18, szResp, 1);
+    m_nStatus = atoi(szTmp);
+
+    m_bParked = m_nStatus == PARKED?true:false;
+    return nErr;
+
+}
 
 int CiOptron::parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator)
 {
