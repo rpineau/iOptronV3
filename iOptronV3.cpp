@@ -62,8 +62,8 @@ int CiOptron::Connect(char *pszPort)
     fflush(Logfile);
 #endif
 
-    // 9600 8N1
-    if(m_pSerx->open(pszPort, 9600, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0)
+    // 9600 8N1 (non CEM120xxx mounts) or 115200 (CEM120xx mounts)
+    if(m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0)
         m_bIsConnected = true;
     else
         m_bIsConnected = false;
@@ -142,7 +142,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] CNexDome::domeCommand sending : %s\n", timestamp, pszCmd);
+    fprintf(Logfile, "[%s] CiOptron::sendCommand sending : %s\n", timestamp, pszCmd);
     fflush(Logfile);
 #endif
 
@@ -152,13 +152,13 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
         return nErr;
 
     // read response
-    nErr = readResponse(szResp, SERIAL_BUFFER_SIZE);
+    nErr = readResponse(szResp, nResultMaxLen);
     if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] CNexDome::domeCommand ***** ERROR READING RESPONSE **** error = %d , response : %s\n", timestamp, nErr, szResp);
+        fprintf(Logfile, "[%s] CiOptron::sendCommand ***** ERROR READING RESPONSE **** error = %d , response : %s\n", timestamp, nErr, szResp);
         fflush(Logfile);
 #endif
         return nErr;
@@ -167,7 +167,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] CNexDome::domeCommand response : %s\n", timestamp, szResp);
+    fprintf(Logfile, "[%s] CiOptron::sendCommand response : %s\n", timestamp, szResp);
     fflush(Logfile);
 #endif
 
@@ -194,7 +194,7 @@ int CiOptron::readResponse(char *szRespBuffer, int nBufferLen)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] [CNexDome::readResponse] readFile error\n", timestamp);
+            fprintf(Logfile, "[%s] [CiOptron::readResponse] readFile error\n", timestamp);
             fflush(Logfile);
 #endif
             return nErr;
@@ -205,7 +205,7 @@ int CiOptron::readResponse(char *szRespBuffer, int nBufferLen)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] CNexDome::readResponse Timeout while waiting for response from controller\n", timestamp);
+            fprintf(Logfile, "[%s] CiOptron::readResponse Timeout while waiting for response from controller\n", timestamp);
             fflush(Logfile);
 #endif
 
@@ -223,7 +223,7 @@ int CiOptron::readResponse(char *szRespBuffer, int nBufferLen)
 
 
 
-#pragma mark - dome controller informations
+#pragma mark - mount controller informations
 int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
 {
     int nErr = IOPTRON_OK;
