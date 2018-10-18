@@ -562,7 +562,7 @@ bool X2Mount::isSynced(void)
 
     X2MutexLocker ml(GetMutex());
 
-   nErr = m_iOptronV3.isAligned(m_bSynced);
+   nErr = m_iOptronV3.isGPSGood(m_bSynced);
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {

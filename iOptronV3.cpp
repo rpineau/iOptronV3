@@ -360,7 +360,7 @@ int CiOptron::isGPSGood(bool &bGPSGood)
 
     nErr = getInfoAndSettings();
 
-    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA
+    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
     return nErr;
 }
 
@@ -588,7 +588,7 @@ int CiOptron::unPark()
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::unPark] \n", timestamp, );
+    fprintf(Logfile, "[%s] [CiOptron::unPark] \n", timestamp);
     fflush(Logfile);
 #endif
 
@@ -678,7 +678,7 @@ int CiOptron::getInfoAndSettings()
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp+21, szResp, 1);
-    m_nTimeSource = atoi(szTmp)
+    m_nTimeSource = atoi(szTmp);
 
     m_bParked = m_nStatus == PARKED?true:false;
     return nErr;
