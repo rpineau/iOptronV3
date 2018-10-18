@@ -52,6 +52,11 @@ enum mountModels {CubeIIEQmode = 0010,
 };
 
 enum iOptronStatus {STOPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
+
+enum iOptronGPSStatus {GPS_BROKE_OR_MISSING=0, GPS_WORKING_NOT_RECEIVED_DATA, GPS_RECEIVING_VALID_DATA};
+
+enum iOptronTimeSource {RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
+
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 500         // 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
@@ -88,7 +93,7 @@ public:
 
     int getRaAndDec(double &dRa, double &dDec);
     int syncTo(double dRa, double dDec);
-    int isAligned(bool &bAligned);
+    int isGPSGood(bool &bGPSGood);
 
     int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr);
     int getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr);
@@ -121,6 +126,8 @@ private:
     float   m_fLat;
     float   m_fLong;
     int     m_nStatus;
+    int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
+    int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
 
     bool    m_bParked;
 

@@ -319,11 +319,16 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
 }
 
 #pragma mark - Mount Coordinates
-
 int CiOptron::getRaAndDec(double &dRa, double &dDec)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    nErr = getInfoAndSettings();
+    if(nErr)
+        return nErr;
+
+    dRa = m_fLat;
+    dDec = m_fLong;
 
     return nErr;
 }
@@ -333,7 +338,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
 int CiOptron::syncTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
-    bool bAligned;
+    bool bGPSGood;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -348,11 +353,14 @@ int CiOptron::syncTo(double dRa, double dDec)
 }
 
 
-int CiOptron::isAligned(bool &bAligned)
+int CiOptron::isGPSGood(bool &bGPSGood)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
 
+    nErr = getInfoAndSettings();
+
+    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA
     return nErr;
 }
 
@@ -390,9 +398,9 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 int CiOptron::startSlewTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
-    bool bAligned;
+    bool bGPSGood;
 
-    nErr = isAligned(bAligned);
+    nErr = isGPSGood(bGPSGood);
     if(nErr)
         return nErr;
 
@@ -539,7 +547,7 @@ int CiOptron::parkMount()
     return nErr; // todo: szResp says '1' or '0' for accepted or failed
 }
 
-int CiOptron::markParkPosition()
+int CiOptron::markParkPosition() // this isn't called from anywhere and sending :MP0# doesn't make sense to me given the name
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -575,34 +583,15 @@ int CiOptron::getAtPark(bool &bParked)
 int CiOptron::unPark()
 {
     int nErr = IOPTRON_OK;
-    bool bAligned;
-
-    // are we aligned ?
-    nErr = isAligned(bAligned);
-    if(nErr) {
-#ifdef IOPTRON_DEBUG
-        ltime = time(NULL);
-        timestamp = asctime(localtime(&ltime));
-        timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CiOptron::unPark] Error getting alignement status\n", timestamp);
-        fflush(Logfile);
-#endif
-        snprintf(m_szLogBuffer,IOPTRON_LOG_BUFFER_SIZE,"[CiOptron::unPark] Error getting alignement status");
-        m_pLogger->out(m_szLogBuffer);
-        return nErr;
-    }
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::unPark] bAligned = %s \n", timestamp, bAligned?"true":"false");
+    fprintf(Logfile, "[%s] [CiOptron::unPark] \n", timestamp, );
     fflush(Logfile);
 #endif
 
-    // if not
-    if(!bAligned) {
-    }
     nErr = setTrackingRates(true, true, 0, 0); // sidereal
     if(nErr) {
 #ifdef IOPTRON_DEBUG
@@ -682,6 +671,14 @@ int CiOptron::getInfoAndSettings()
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp+18, szResp, 1);
     m_nStatus = atoi(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp+17, szResp, 1);
+    m_nGPSStatus = atoi(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp+21, szResp, 1);
+    m_nTimeSource = atoi(szTmp)
 
     m_bParked = m_nStatus == PARKED?true:false;
     return nErr;
