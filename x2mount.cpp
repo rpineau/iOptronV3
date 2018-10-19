@@ -132,8 +132,8 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 	m_CurrentRateIndex = nRateIndex;
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] startOpenLoopMove called Dir: %d , Rate: %d\n", timestamp, Dir, nRateIndex);
         fflush(LogFile);
@@ -144,8 +144,8 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] startOpenLoopMove ERROR %d\n", timestamp, nErr);
             fflush(LogFile);
@@ -167,8 +167,8 @@ int X2Mount::endOpenLoopMove(void)
 
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile){
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endOpenLoopMove Called\n", timestamp);
         fflush(LogFile);
@@ -179,8 +179,8 @@ int X2Mount::endOpenLoopMove(void)
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] endOpenLoopMove ERROR %d\n", timestamp, nErr);
             fflush(LogFile);
@@ -207,8 +207,8 @@ int X2Mount::rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* psz
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] rateNameFromIndexOpenLoopMove ERROR %d\n", timestamp, nErr);
             fflush(LogFile);
@@ -393,8 +393,8 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] raDec Called. Ra : %f , Dec : %f \n", timestamp, ra, dec);
         fprintf(LogFile, "[%s] nErr = %d \n", timestamp, nErr);
@@ -415,8 +415,8 @@ int X2Mount::abort()
 
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] abort Called\n", timestamp);
         fflush(LogFile);
@@ -429,8 +429,8 @@ int X2Mount::abort()
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] Abort nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -451,8 +451,8 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startSlewTo Called %f %f\n", timestamp, dRa, dDec);
         fflush(LogFile);
@@ -462,8 +462,8 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] startSlewTo nErr = %d \n", timestamp, nErr);
             fflush(LogFile);
@@ -491,8 +491,8 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&(pMe->ltime)));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] isCompleteSlewTo nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -506,8 +506,8 @@ int X2Mount::endSlewTo(void)
 {
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] endSlewTo Called\n", timestamp);
         fflush(LogFile);
@@ -528,8 +528,8 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] syncMount Called : %f\t%f\n", timestamp, ra, dec);
         fflush(LogFile);
@@ -542,8 +542,8 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] syncMount nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -566,8 +566,8 @@ bool X2Mount::isSynced(void)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] isSynced Called : m_bSynced = %s\n", timestamp, m_bSynced?"true":"false");
         fprintf(LogFile, "[%s] isSynced nErr = %d \n", timestamp, nErr);
@@ -595,8 +595,8 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
     nErr = m_iOptronV3.setTrackingRates(bTrackingOn, bIgnoreRates, dTrackRaArcSecPerHr, dTrackDecArcSecPerHr);
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] setTrackingRates Called. Tracking On: %s , Ra rate : %f , Dec rate: %f\n", timestamp, bTrackingOn?"true":"false", dRaRateArcSecPerSec, dDecRateArcSecPerSec);
         fflush(LogFile);
@@ -607,8 +607,8 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] setTrackingRates nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -634,8 +634,8 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] trackingRates  m_iOptronV3.getTrackRates nErr = %d \n", timestamp, nErr);
             fflush(LogFile);
@@ -648,8 +648,8 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] trackingRates Called. Tracking On: %d , Ra rate : %f , Dec rate: %f\n", timestamp, bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
         fflush(LogFile);
@@ -669,8 +669,8 @@ int X2Mount::siderealTrackingOn()
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] siderealTrackingOn Called \n", timestamp);
         fflush(LogFile);
@@ -683,8 +683,8 @@ int X2Mount::siderealTrackingOn()
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] siderealTrackingOn nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -704,8 +704,8 @@ int X2Mount::trackingOff()
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] trackingOff Called \n", timestamp);
         fflush(LogFile);
@@ -717,8 +717,8 @@ int X2Mount::trackingOff()
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] trackingOff nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -744,8 +744,8 @@ bool X2Mount::needsRefactionAdjustments(void)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] getRefractionCorrEnabled nErr = %d \n", timestamp, nErr);
         fprintf(LogFile, "[%s] getRefractionCorrEnabled bEnabled = %s\n", timestamp, bEnabled?"true":"false");
@@ -773,8 +773,8 @@ bool X2Mount::isParked(void)
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] isParked m_iOptronV3.getAtPark nErr = %d \n", timestamp, nErr);
             fflush(LogFile);
@@ -790,8 +790,8 @@ bool X2Mount::isParked(void)
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] isParked m_iOptronV3.getTrackRates nErr = %d \n", timestamp, nErr);
             fflush(LogFile);
@@ -817,8 +817,8 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
 	X2MutexLocker ml(GetMutex());
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] startPark Called.\n", timestamp);
         fflush(LogFile);
@@ -830,8 +830,8 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
         nErr = ERR_CMDFAILED;
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] startPark  m_iOptronV3.gotoPark nErr = %d \n", timestamp, nErr);
             fflush(LogFile);
@@ -851,12 +851,12 @@ int X2Mount::isCompletePark(bool& bComplete) const
 
     X2Mount* pMe = (X2Mount*)this;
 
-    X2MutexLocker ml(pMe ->GetMutex());
+    X2MutexLocker ml(pMe->GetMutex());
 
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		pMe->ltime = time(NULL);
+		pMe->timestamp = asctime(localtime(&(pMe->ltime)));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isCompletePark Called\n", timestamp);
         fflush(LogFile);
@@ -868,8 +868,8 @@ int X2Mount::isCompletePark(bool& bComplete) const
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&(pMe->ltime)));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] isCompletePark  m_iOptronV3.getAtPark nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
@@ -897,8 +897,8 @@ int X2Mount::startUnpark(void)
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
             fprintf(LogFile, "[%s] startUnpark : m_iOptronV3.unPark() failled !\n", timestamp);
             fflush(LogFile);
@@ -925,7 +925,7 @@ int X2Mount::isCompleteUnpark(bool& bComplete) const
 
     X2Mount* pMe = (X2Mount*)this;
 
-    X2MutexLocker ml(pMe ->GetMutex());
+    X2MutexLocker ml(pMe->GetMutex());
 
     bComplete = false;
 
@@ -933,10 +933,10 @@ int X2Mount::isCompleteUnpark(bool& bComplete) const
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
-            time_t ltime = time(NULL);
-            char *timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] isCompleteUnpark  m_iOptronV3.getAtPark nErr = %d \n", timestamp, nErr);
+            pMe->ltime = time(NULL);
+            pMe->timestamp = asctime(localtime(&(pMe->ltime)));
+            pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] isCompleteUnpark  m_iOptronV3.getAtPark nErr = %d \n", pMe->timestamp, nErr);
             fflush(LogFile);
         }
 #endif
@@ -955,10 +955,10 @@ int X2Mount::isCompleteUnpark(bool& bComplete) const
         nErr = ERR_CMDFAILED;
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
-        timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(LogFile, "[%s] isCompleteUnpark  m_iOptronV3.getTrackRates nErr = %d \n", timestamp, nErr);
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&(pMe->ltime)));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] isCompleteUnpark  m_iOptronV3.getTrackRates nErr = %d \n", pMe->timestamp, nErr);
         fflush(LogFile);
     }
 #endif
@@ -998,10 +998,10 @@ int X2Mount::beyondThePole(bool& bYes) {
 double X2Mount::flipHourAngle() {
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		char *timestamp = asctime(localtime(&ltime));
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		// fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
+		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
         fflush(LogFile);
 	}
 #endif
@@ -1022,8 +1022,8 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
-        time_t ltime = time(NULL);
-        char *timestamp = asctime(localtime(&ltime));
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] gemLimits m_iOptronV3.getLimits nErr = %d\n", timestamp, nErr);
         fprintf(LogFile, "[%s] gemLimits dHoursEast = %f\n", timestamp, dHoursEast);
