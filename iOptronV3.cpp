@@ -544,19 +544,16 @@ int CiOptron::parkMount()
     return nErr; // todo: szResp says '1' or '0' for accepted or failed
 }
 
-int CiOptron::markParkPosition() // this isn't called from anywhere and sending :MP0# doesn't make sense to me given the name
+int CiOptron::markParkPosition(double dAz, double dAlt)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    int nParkResult;
 
-    nErr = sendCommand(":MP0#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    // set az park position :  “:SPATTTTTTTTT#”
+    // nErr = sendCommand(":SPA%09d#", szResp, SERIAL_BUFFER_SIZE, 1);
     if(nErr)
         return nErr;
-
-    nParkResult = atoi(szResp);
-    if(nParkResult != 1)
-        return ERR_CMDFAILED;
+    // set Alt park postion : “:SPHTTTTTTTT#”
+    // nErr = sendCommand(":SPH%09d#", szResp, SERIAL_BUFFER_SIZE, 1);
 
     return nErr;
 
@@ -580,6 +577,7 @@ int CiOptron::getAtPark(bool &bParked)
 int CiOptron::unPark()
 {
     int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -588,6 +586,9 @@ int CiOptron::unPark()
     fprintf(Logfile, "[%s] [CiOptron::unPark] \n", timestamp);
     fflush(Logfile);
 #endif
+    nErr = sendCommand(":MP0#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    if(nErr)
+        return nErr;
 
     nErr = setTrackingRates(true, true, 0, 0); // sidereal
     if(nErr) {

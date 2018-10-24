@@ -103,7 +103,7 @@ public:
     int stopOpenLoopMove();
 
     int parkMount();
-    int markParkPosition();
+    int markParkPosition(double dAz, double dAlt);
     int getAtPark(bool &bParked);
     int unPark();
 
