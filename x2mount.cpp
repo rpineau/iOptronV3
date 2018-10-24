@@ -237,6 +237,7 @@ int X2Mount::execModalSettingsDialog(void)
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     double dParkAz, dParkAlt;
     int i;
+
 	if (NULL == ui) return ERR_POINTER;
 	
 	if ((nErr = ui->loadUserInterface("iOptronV3.ui", deviceType(), m_nPrivateMulitInstanceIndex)))
@@ -280,9 +281,9 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     double dParkAz, dParkAlt;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
 
-    // if(!m_bLinked)
-    //    return ;
-    printf("Event = %s\n", pszEvent);
+    if(!m_bLinked)
+        return ;
+
     if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set the home polarbutton
         uiex->propertyDouble("parkAz", "value", dParkAz);
         uiex->propertyDouble("parkAlt", "value", dParkAlt);
