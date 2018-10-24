@@ -238,7 +238,7 @@ int X2Mount::execModalSettingsDialog(void)
     int i;
 	if (NULL == ui) return ERR_POINTER;
 	
-	if ((nErr = ui->loadUserInterface("iOptron V3.ui", deviceType(), m_nPrivateMulitInstanceIndex)))
+	if ((nErr = ui->loadUserInterface("iOptronV3.ui", deviceType(), m_nPrivateMulitInstanceIndex)))
 		return nErr;
 	
 	if (NULL == (dx = uiutil.X2DX())) {
@@ -251,9 +251,14 @@ int X2Mount::execModalSettingsDialog(void)
 
 	// Set values in the userinterface
     if(m_bLinked) {
-
+        dx->setEnabled("parkAz", true);
+        dx->setEnabled("parkAlt", true);
+        dx->setEnabled("pushButton", true);
     }
     else {
+        dx->setEnabled("parkAz", false);
+        dx->setEnabled("parkAlt", false);
+        dx->setEnabled("pushButton", false);
     }
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))
@@ -268,11 +273,21 @@ int X2Mount::execModalSettingsDialog(void)
 void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
     int nErr;
+    double dParkAz, dParkAlt;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
 
-    if(!m_bLinked)
-        return ;
-
+    // if(!m_bLinked)
+    //    return ;
+    printf("Event = %s\n", pszEvent);
+    if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set the home polarbutton
+        uiex->propertyDouble("parkAz", "value", dParkAz);
+        uiex->propertyDouble("parkAlt", "value", dParkAlt);
+        nErr = m_iOptronV3.markParkPosition(dParkAz, dParkAlt);
+        if(nErr) {
+            snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting park position : %d", nErr);
+            uiex->messageBox("Error",szTmpBuf);
+        }
+    }
     return;
 }
 
