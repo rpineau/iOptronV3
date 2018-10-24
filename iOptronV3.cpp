@@ -6,8 +6,7 @@ CiOptron::CiOptron()
 
 	m_bIsConnected = false;
 
-    m_bParked = true;
-    m_bLimitCached = false;
+    m_bParked = false;  // probably not good to assume we're parked.  Power could have shut down or we're at zero position or we're parked
 
 #ifdef IOPTRON_DEBUG
 #if defined(SB_WIN_BUILD)
@@ -106,18 +105,17 @@ int CiOptron::Disconnect(void)
         }
     }
 	m_bIsConnected = false;
-    m_bLimitCached = false;
 
 	return SB_OK;
 }
 
-
+#pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::getNbSlewRates()
 {
     return IOPTRON_NB_SLEW_SPEEDS;
 }
 
-// returns "Slew", "ViewVel4", "ViewVel3", "ViewVel2", "ViewVel1"
+#pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMaxSize)
 {
     if (nZeroBasedIndex > IOPTRON_NB_SLEW_SPEEDS)
@@ -128,10 +126,85 @@ int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMa
     return IOPTRON_OK;
 }
 
+#pragma mark - Used by OpenLoopMoveInterface
+int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate) // todo: not trivial how to slew in V3
+{
+    int nErr = IOPTRON_OK;
+    char szCmd[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+
+    m_nOpenLoopDir = Dir;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::startOpenSlew] setting to Dir %d\n", timestamp, Dir);
+    fprintf(Logfile, "[%s] [CiOptron::startOpenSlew] Setting rate to %d\n", timestamp, nRate);
+    fflush(Logfile);
+#endif
+
+    nErr = getInfoAndSettings();
+    if(nErr)
+        return nErr;
+    if (m_nStatus == SLEWING) {
+        // interrupt slewing since user pressed button
+        nErr = sendCommand(":Q#", szResp, SERIAL_BUFFER_SIZE);
+    }
+
+    // select rate.  :SRn# n=1..7  1=1x, 2=2x, 3=8x, 4=16x, 5=64x, 6=128x, 7=256x
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%d#", nRate+1);
+    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+
+    // figure out direction
+    switch(Dir){
+        case MountDriverInterface::MD_NORTH:
+            nErr = sendCommand(":mn#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+        case MountDriverInterface::MD_SOUTH:
+            nErr = sendCommand(":ms#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+        case MountDriverInterface::MD_EAST:
+            nErr = sendCommand(":me#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+        case MountDriverInterface::MD_WEST:
+            nErr = sendCommand(":mw#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+    }
+
+    return nErr;
+}
+
+#pragma mark - Used by OpenLoopMoveInterface
+int CiOptron::stopOpenLoopMove()
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::stopOpenLoopMove] Dir was %d\n", timestamp, m_nOpenLoopDir);
+    fflush(Logfile);
+#endif
+
+    switch(m_nOpenLoopDir){
+        case MountDriverInterface::MD_NORTH:
+        case MountDriverInterface::MD_SOUTH:
+            nErr = sendCommand(":qD#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+        case MountDriverInterface::MD_EAST:
+        case MountDriverInterface::MD_WEST:
+            nErr = sendCommand(":qR#", szResp, SERIAL_BUFFER_SIZE);
+            break;
+    }
+
+    return nErr;
+}
+
+
 #pragma mark - IOPTRON communication
-
-
-
 int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen)
 {
     int nErr = IOPTRON_OK;
@@ -333,7 +406,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     return nErr;
 }
 
-
+// where Eric left off
 #pragma mark - Sync and Cal
 int CiOptron::syncTo(double dRa, double dDec)
 {
@@ -394,7 +467,6 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 
 
 #pragma mark - Slew
-
 int CiOptron::startSlewTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
@@ -403,81 +475,6 @@ int CiOptron::startSlewTo(double dRa, double dDec)
     nErr = isGPSGood(bGPSGood);
     if(nErr)
         return nErr;
-
-    return nErr;
-}
-
-
-int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate) // todo: not trivial how to slew in V3
-{
-    int nErr = IOPTRON_OK;
-    char szCmd[SERIAL_BUFFER_SIZE];
-    char szResp[SERIAL_BUFFER_SIZE];
-
-    m_nOpenLoopDir = Dir;
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::startOpenSlew] setting to Dir %d\n", timestamp, Dir);
-    fprintf(Logfile, "[%s] [CiOptron::startOpenSlew] Setting rate to %d\n", timestamp, nRate);
-    fflush(Logfile);
-#endif
-
-    // select rate
-    if(nRate == 4) { // "Slew"
-        nErr = sendCommand("!KSsl;", szResp, SERIAL_BUFFER_SIZE);
-    }
-    else {
-        // clear slew
-        nErr = sendCommand("!KCsl;", szResp, SERIAL_BUFFER_SIZE);
-        // select rate
-        // KScv + 1,2 3 or 4 for ViewVel 1,2,3,4, 'ViewVel 1' is index 0 so nRate+1
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, "!KScv%d;", nRate+1);
-    }
-    // figure out direction
-    switch(Dir){
-        case MountDriverInterface::MD_NORTH:
-            nErr = sendCommand("!KSpu100;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-        case MountDriverInterface::MD_SOUTH:
-            nErr = sendCommand("!KSpd100;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-        case MountDriverInterface::MD_EAST:
-            nErr = sendCommand("!KSpl100;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-        case MountDriverInterface::MD_WEST:
-            nErr = sendCommand("!KSsr100;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-    }
-
-    return nErr;
-}
-
-int CiOptron::stopOpenLoopMove()
-{
-    int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::stopOpenLoopMove] Dir was %d\n", timestamp, m_nOpenLoopDir);
-    fflush(Logfile);
-#endif
-
-    switch(m_nOpenLoopDir){
-        case MountDriverInterface::MD_NORTH:
-        case MountDriverInterface::MD_SOUTH:
-            nErr = sendCommand("!XXud;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-        case MountDriverInterface::MD_EAST:
-        case MountDriverInterface::MD_WEST:
-            nErr = sendCommand("!XXlr;", szResp, SERIAL_BUFFER_SIZE);
-            break;
-    }
 
     return nErr;
 }

@@ -63,10 +63,8 @@ enum iOptronTimeSource {RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
 #define ERR_PARSE   1
 
 
-#define IOPTRON_NB_SLEW_SPEEDS 5
-#define IOPTRON_SLEW_NAME_LENGHT 12
-#define IOPTRON_NB_ALIGNEMENT_TYPE 4
-#define IOPTRON_ALIGNEMENT_NAME_LENGHT 12
+#define IOPTRON_NB_SLEW_SPEEDS 7
+#define IOPTRON_SLEW_NAME_LENGHT 5
 
 
 // Define Class for Astrometric Instruments IOPTRON controller.
@@ -153,8 +151,7 @@ private:
 
     int     getInfoAndSettings();
 
-    const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "ViewVel 1", "ViewVel 2", "ViewVel 3", "ViewVel 4",  "Slew"};
-    const char m_szAlignmentType[IOPTRON_NB_ALIGNEMENT_TYPE][IOPTRON_ALIGNEMENT_NAME_LENGHT] = { "Polar", "AltAz", "NearlyPolar", "NearlyAltAz"};
+    const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "1x", "2x", "8x", "16x",  "64x", "128x", "256x"};
 
     CStopWatch      timer;
 
