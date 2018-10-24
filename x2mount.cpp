@@ -282,7 +282,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set the home polarbutton
         uiex->propertyDouble("parkAz", "value", dParkAz);
         uiex->propertyDouble("parkAlt", "value", dParkAlt);
-        nErr = m_iOptronV3.markParkPosition(dParkAz, dParkAlt);
+        nErr = m_iOptronV3.setParkPosition(dParkAz, dParkAlt);
         if(nErr) {
             snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting park position : %d", nErr);
             uiex->messageBox("Error",szTmpBuf);
@@ -338,7 +338,7 @@ bool X2Mount::isEstablishLinkAbortable(void) const
 
 void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
-	str = "iOptron V3 X2 plugin by Rodolphe Pineau and rubesmn";
+	str = "iOptron V3 X2 plugin by Eric Roubal and Rodolphe Pineau";
 }
 
 double	X2Mount::driverInfoVersion(void) const

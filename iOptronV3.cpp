@@ -530,9 +530,8 @@ int CiOptron::parkMount()
     // set park position ?
     // RP : we probably need to set the mount park position from the settings dialog. I'll look into it.
     //      from the doc : "This command parks to the most recently defined parking position" ... so we need to define it
-    //      if it's not already define (and saved) in the mount
+    //      if it's not already defined (and saved) in the mount
     // or goto ?    // RP : Goto and Park should be different.
-    // goto park
     nErr = sendCommand(":MP1#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to park
     if(nErr)
         return nErr;
@@ -544,16 +543,42 @@ int CiOptron::parkMount()
     return nErr; // todo: szResp says '1' or '0' for accepted or failed
 }
 
-int CiOptron::markParkPosition(double dAz, double dAlt)
+int CiOptron::setParkPosition(double dAz, double dAlt)
 {
     int nErr = IOPTRON_OK;
+    char szCmd[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+    double dAzArcSec, dAltArcSec;
 
     // set az park position :  “:SPATTTTTTTTT#”
-    // nErr = sendCommand(":SPA%09d#", szResp, SERIAL_BUFFER_SIZE, 1);
+    // convert dAz to arcsec then to 0.01 arcsec
+    dAzArcSec = (dAz * 60 * 60) / 0.01;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::markParkPosition] setting  Park Az to : %d\n", timestamp, int(dAzArcSec));
+    fflush(Logfile);
+#endif
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAzArcSec));
+    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE, 1);
     if(nErr)
         return nErr;
+
     // set Alt park postion : “:SPHTTTTTTTT#”
-    // nErr = sendCommand(":SPH%09d#", szResp, SERIAL_BUFFER_SIZE, 1);
+    // convert dAlt to arcsec then to 0.01 arcsec
+    dAltArcSec = (dAlt * 60 * 60) / 0.01;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::markParkPosition] setting  Park Alt to : %d\n", timestamp, int(dAltArcSec));
+    fflush(Logfile);
+#endif
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAltArcSec));
+    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE, 1);
+    if(nErr)
+        return nErr;
 
     return nErr;
 
