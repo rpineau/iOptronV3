@@ -104,6 +104,7 @@ public:
 
     int parkMount();
     int setParkPosition(double dAz, double dAlt);
+    int getParkPosition(double &dAz, double &dAlt);
     int getAtPark(bool &bParked);
     int unPark();
 

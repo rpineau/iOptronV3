@@ -584,6 +584,27 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
 
 }
 
+int CiOptron::getParkPosition(double &dAz, double &dAlt)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szParkAz[SERIAL_BUFFER_SIZE], szParkAlt[SERIAL_BUFFER_SIZE];
+    int nAzArcSec, nAltArcSec;
+
+    nErr = sendCommand(":GPC#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    if(nErr)
+        return nErr;
+    memset(szParkAz, 0, SERIAL_BUFFER_SIZE);
+    memset(szParkAlt, 0, SERIAL_BUFFER_SIZE);
+    memcpy(szParkAz, szResp, 8);
+    memcpy(szParkAlt, szResp+8, 9);
+    nAzArcSec = atoi(szParkAz);
+    nAltArcSec = atoi(szParkAlt);
+    dAz = (nAzArcSec*0.01)/ 60 /60 ;
+    dAlt = (nAltArcSec*0.01)/ 60 /60 ;
+    return nErr;
+}
+
 int CiOptron::getAtPark(bool &bParked)
 {
     int nErr = IOPTRON_OK;

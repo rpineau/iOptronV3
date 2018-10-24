@@ -235,6 +235,7 @@ int X2Mount::execModalSettingsDialog(void)
 	X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
 	bool bPressedOK = false;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
+    double dParkAz, dParkAlt;
     int i;
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -254,6 +255,9 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
         dx->setEnabled("pushButton", true);
+        m_iOptronV3.getParkPosition(dParkAz, dParkAlt);
+        dx->setPropertyDouble("parkAz", "value", dParkAz);
+        dx->setPropertyDouble("parkAlt", "value", dParkAlt);
     }
     else {
         dx->setEnabled("parkAz", false);
