@@ -153,7 +153,7 @@ int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned in
     }
 
     // select rate.  :SRn# n=1..7  1=1x, 2=2x, 3=8x, 4=16x, 5=64x, 6=128x, 7=256x
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%d#", nRate+1);
+    snprintf(szCmd, 2, ":SR%u#", nRate+1);
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 
     // figure out direction
@@ -411,7 +411,16 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
 int CiOptron::syncTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
-    bool bGPSGood;
+    char szResp[SERIAL_BUFFER_SIZE];
+    nErr = getInfoAndSettings();
+    if(nErr)
+        return nErr;
+
+    if (m_nGPSStatus != GPS_RECEIVING_VALID_DATA)
+        return ERR_CMDFAILED;
+
+    if(!m_bIsConnected)
+        return NOT_CONNECTED;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -421,6 +430,35 @@ int CiOptron::syncTo(double dRa, double dDec)
     fprintf(Logfile, "[%s] [CiOptron::syncTo] Dec : %f\n", timestamp, dDec);
     fflush(Logfile);
 #endif
+
+    // what is dRA and dDec units from X2??
+
+    // iOptron:
+    // TTTTTTTT(T) 0.01 arc-seconds
+    //  current logitude comes from getInfoAndSettings() and returns sTTTTTTTT (1+8) where
+    //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
+    //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
+
+//    nErr = sendCommand(":SRAsTTTTTTTT#", szResp, SERIAL_BUFFER_SIZE);  // set RA
+//    if(nErr) {
+//        return nErr
+//    }
+
+    //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
+    //    which is current latitude plus 90 degrees.
+    //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
+//    nErr = sendCommand(":SdsTTTTTTTT#", szResp, SERIAL_BUFFER_SIZE);  // set DEC
+//    if(nErr) {
+//        // clear RA?
+//        return nErr
+//    }
+
+//    nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
+//    if(nErr) {
+//        // clear RA?
+//        // clear DEC?
+//        return nErr
+//    }
 
      return nErr;
 }
