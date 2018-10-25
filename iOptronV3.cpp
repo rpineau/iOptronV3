@@ -396,12 +396,21 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    nErr = getInfoAndSettings();
+
+    char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE];
+    int nRa, nDec;
+
+    nErr = sendCommand(":GEP#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
     if(nErr)
         return nErr;
-
-    dRa = m_fLat;
-    dDec = m_fLong;
+    memset(szRa, 0, SERIAL_BUFFER_SIZE);
+    memset(szDec, 0, SERIAL_BUFFER_SIZE);
+    memcpy(szDec, szResp, 9);
+    memcpy(szRa, szResp+9, 9);
+    nRa = atoi(szRa);
+    nDec = atoi(szDec);
+    dRa = (nRa*0.01)/ 60 /60 ;
+    dDec = (nDec*0.01)/ 60 /60 ;
 
     return nErr;
 }
