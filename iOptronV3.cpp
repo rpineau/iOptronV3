@@ -412,6 +412,17 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     dRa = (nRa*0.01)/ 60 /60 ;
     dDec = (nDec*0.01)/ 60 /60 ;
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] nRa : %d\n", timestamp, nRa);
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] nDec : %d\n", timestamp, nDec);
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Ra : %f\n", timestamp, dRa);
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Dec : %f\n", timestamp, dDec);
+    fflush(Logfile);
+#endif
+
     return nErr;
 }
 
