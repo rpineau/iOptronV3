@@ -426,7 +426,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     return nErr;
 }
 
-#pragma mark - Sync and Cal
+#pragma mark - Sync and Cal - used by SyncMountInterface
 int CiOptron::syncTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
