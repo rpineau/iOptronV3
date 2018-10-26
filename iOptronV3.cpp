@@ -473,7 +473,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     }
 
     //  sTTTTTTTT (sign+8)
-    nDec = ((dDec+90)*60*60)/0.01;
+    nDec = (dDec*60*60)/0.01;
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+08d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
