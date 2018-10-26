@@ -456,7 +456,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     // iOptron:
     // TTTTTTTTT (9) in 0.01 arc-seconds, no sign
 
-    nRa = (dRa*60*60)/0.01;
+    nRa = int((dRa*60*60)/0.01);
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -473,7 +473,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     }
 
     //  sTTTTTTTT (sign+8)
-    nDec = (dDec*60*60)/0.01;
+    nDec = int((dDec*60*60)/0.01);
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+08d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -504,7 +504,6 @@ int CiOptron::syncTo(double dRa, double dDec)
 int CiOptron::isGPSGood(bool &bGPSGood)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 
     nErr = getInfoAndSettings();
 
