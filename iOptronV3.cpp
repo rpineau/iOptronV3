@@ -433,6 +433,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     int nRa, nDec;
     char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
+
     nErr = getInfoAndSettings();
     if(nErr)
         return nErr;
@@ -453,14 +454,10 @@ int CiOptron::syncTo(double dRa, double dDec)
 #endif
 
     // iOptron:
-    // TTTTTTTT(T) in 0.01 arc-seconds
+    // TTTTTTTTT (9) in 0.01 arc-seconds, no sign
 
-    //  current logitude comes from getInfoAndSettings() and returns sTTTTTTTT (1+8) where
-    //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
-    //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
-    // TSX provides RA and DEC in degrees with a decimal
-    nRa = (dRa*60*60)/0.01
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%+.8d#", nRa);
+    nRa = (dRa*60*60)/0.01;
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -472,14 +469,12 @@ int CiOptron::syncTo(double dRa, double dDec)
 
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set RA
     if(nErr) {
-        return nErr
+        return nErr;
     }
 
-    //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
-    //    which is current latitude plus 90 degrees.
-    //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
-    nDec = ((dDec+90)*60*60)/0.01
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+.8d#", nDec);
+    //  sTTTTTTTT (sign+8)
+    nDec = ((dDec+90)*60*60)/0.01;
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+08d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -492,14 +487,14 @@ int CiOptron::syncTo(double dRa, double dDec)
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set DEC
     if(nErr) {
         // clear RA?
-        return nErr
+        return nErr;
     }
 
     nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
     if(nErr) {
         // clear RA?
         // clear DEC?
-        return nErr
+        return nErr;
     }
 
      return nErr;
