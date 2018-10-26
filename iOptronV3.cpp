@@ -153,7 +153,7 @@ int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned in
     }
 
     // select rate.  :SRn# n=1..7  1=1x, 2=2x, 3=8x, 4=16x, 5=64x, 6=128x, 7=256x
-    snprintf(szCmd, 2, ":SR%u#", nRate+1);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%.1u#", nRate+1);
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 
     // figure out direction
@@ -426,11 +426,12 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     return nErr;
 }
 
-// where Eric left off
 #pragma mark - Sync and Cal
 int CiOptron::syncTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
+    int nRa, nDec;
+    char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
     nErr = getInfoAndSettings();
     if(nErr)
@@ -451,34 +452,55 @@ int CiOptron::syncTo(double dRa, double dDec)
     fflush(Logfile);
 #endif
 
-    // what is dRA and dDec units from X2??
-
     // iOptron:
-    // TTTTTTTT(T) 0.01 arc-seconds
+    // TTTTTTTT(T) in 0.01 arc-seconds
+
     //  current logitude comes from getInfoAndSettings() and returns sTTTTTTTT (1+8) where
     //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
     //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
+    // TSX provides RA and DEC in degrees with a decimal
+    nRa = (dRa*60*60)/0.01
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%+.8d#", nRa);
 
-//    nErr = sendCommand(":SRAsTTTTTTTT#", szResp, SERIAL_BUFFER_SIZE);  // set RA
-//    if(nErr) {
-//        return nErr
-//    }
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::syncTo] computed command for RA coordinate set: %s\n", timestamp, szCmd);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set RA
+    if(nErr) {
+        return nErr
+    }
 
     //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
     //    which is current latitude plus 90 degrees.
     //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
-//    nErr = sendCommand(":SdsTTTTTTTT#", szResp, SERIAL_BUFFER_SIZE);  // set DEC
-//    if(nErr) {
-//        // clear RA?
-//        return nErr
-//    }
+    nDec = ((dDec+90)*60*60)/0.01
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+.8d#", nDec);
 
-//    nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
-//    if(nErr) {
-//        // clear RA?
-//        // clear DEC?
-//        return nErr
-//    }
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::syncTo] computed command for DEC coordinate set: %s\n", timestamp, szCmd);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set DEC
+    if(nErr) {
+        // clear RA?
+        return nErr
+    }
+
+    nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
+    if(nErr) {
+        // clear RA?
+        // clear DEC?
+        return nErr
+    }
 
      return nErr;
 }
@@ -495,7 +517,7 @@ int CiOptron::isGPSGood(bool &bGPSGood)
     return nErr;
 }
 
-
+// where Eric left off
 #pragma mark - tracking rates
 int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr)
 {
