@@ -460,7 +460,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
     //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
     // TSX provides RA and DEC in degrees with a decimal
-    nRa = (dRa*60*60)/0.01;
+    nRa = int((dRa*60*60)/0.01);
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%+.8d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -479,7 +479,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
     //    which is current latitude plus 90 degrees.
     //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
-    nDec = ((dDec+90)*60*60)/0.01;
+    nDec = int(((dDec+90)*60*60)/0.01);
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+.8d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
