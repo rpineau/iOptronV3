@@ -314,6 +314,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
         return nErr;
 
     nModel = atoi(szResp);
+    m_nModel = nModel;   // set member so we can compare on it later
 
     switch(nModel) {
         case CubeIIEQmode:
@@ -459,7 +460,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
     //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
     // TSX provides RA and DEC in degrees with a decimal
-    nRa = (dRa*60*60)/0.01
+    nRa = (dRa*60*60)/0.01;
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%+.8d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -472,13 +473,13 @@ int CiOptron::syncTo(double dRa, double dDec)
 
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set RA
     if(nErr) {
-        return nErr
+        return nErr;
     }
 
     //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
     //    which is current latitude plus 90 degrees.
     //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
-    nDec = ((dDec+90)*60*60)/0.01
+    nDec = ((dDec+90)*60*60)/0.01;
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+.8d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -492,14 +493,14 @@ int CiOptron::syncTo(double dRa, double dDec)
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set DEC
     if(nErr) {
         // clear RA?
-        return nErr
+        return nErr;
     }
 
     nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
     if(nErr) {
         // clear RA?
         // clear DEC?
-        return nErr
+        return nErr;
     }
 
      return nErr;
@@ -568,35 +569,27 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     bComplete = false;
 
     if(timer.GetElapsedSeconds()<2) {
-        // we're checking for comletion to quickly, assume it's moving for now
+        // we're checking for comletion too quickly, assume it's moving for now
         return nErr;
     }
 
-    nErr = sendCommand("!GGgr;", szResp, SERIAL_BUFFER_SIZE);
+    nErr = getInfoAndSettings();
     if(nErr)
         return nErr;
+
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] szResp : %s\n", timestamp, szResp);
+    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] after getInfoAndSettings() status is : %s\n", timestamp, m_nStatus);
     fflush(Logfile);
 #endif
 
-    // remove the %
-    szResp[strlen(szResp) -1 ] = 0;
-    
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] szResp : %s\n", timestamp, szResp);
-    fflush(Logfile);
-#endif
-
-    nPrecentRemaining = atoi(szResp);
-    if(nPrecentRemaining == 0)
+    if (m_nStatus == SLEWING || m_nStatus == FLIPPING) {
+        bComplete = false;
+    } else {
         bComplete = true;
+    }
 
     return nErr;
 }
@@ -734,13 +727,62 @@ int CiOptron::unPark()
 
 int CiOptron::getRefractionCorrEnabled(bool &bEnabled)
 {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] called \n", timestamp);
+    fflush(Logfile);
+#endif
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
 
-    bEnabled = false;
-    nErr = sendCommand("!PGre;", szResp, SERIAL_BUFFER_SIZE);
-    if(strncmp(szResp,"Yes",SERIAL_BUFFER_SIZE) == 0) {
-        bEnabled = true;
+    switch(m_nModel) {
+        case CubeIIEQmode:
+            bEnabled = false;
+            break;
+        case SmartEQProPlus:
+            bEnabled = false;
+            break;
+        case CEM25:
+            bEnabled = false;
+            break;
+        case CEM25_EC:
+            bEnabled = false;
+            break;
+        case iEQ30Pro:
+            bEnabled = false;
+            break;
+        case iEQ45ProEQmode:
+            bEnabled = false;
+            break;
+        case  CEM60:
+            bEnabled = false;
+            break;
+        case CEM60_EC:
+            bEnabled = false;
+            break;
+        case CEM120:
+            bEnabled = true;
+            break;
+        case CEM120_EC:
+            bEnabled = true;
+            break;
+        case CEM120_EC2:
+            bEnabled = true;
+            break;
+        case CubeIIAAmode:
+            bEnabled = false;
+            break;
+        case AZMountPro:
+            bEnabled = false;
+            break;
+        case iEQ45ProAAmode:
+            bEnabled = false;
+            break;
+        default :
+            bEnabled = false;
+            break;
     }
     return nErr;
 }
@@ -784,47 +826,46 @@ int CiOptron::getInfoAndSettings()
     nErr = sendCommand(":GLS#", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  :GLS# response is: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp, 9);
     m_fLong = atof(szTmp);
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp+9, szResp, 9);
+    memcpy(szTmp, szResp+9, 8);
     m_fLat = atof(szTmp);
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp+18, szResp, 1);
-    m_nStatus = atoi(szTmp);
-
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp+17, szResp, 1);
+    memcpy(szTmp, szResp+17, 1);
     m_nGPSStatus = atoi(szTmp);
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp+21, szResp, 1);
+    memcpy(szTmp, szResp+18, 1);
+    m_nStatus = atoi(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp+21, 1);
     m_nTimeSource = atoi(szTmp);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  lat is : %f, long is: %f, status is: %i, gpsStatus is: %i, timeSource is: %i\n", timestamp, m_fLat, m_fLong, m_nStatus, m_nGPSStatus, m_nTimeSource);
+    fflush(Logfile);
+#endif
 
     m_bParked = m_nStatus == PARKED?true:false;
     return nErr;
 
 }
 
-int CiOptron::parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator)
-{
-    int nErr = IOPTRON_OK;
-    std::string sSegment;
-    std::stringstream ssTmp(pszIn);
-
-    svFields.clear();
-    // split the string into vector elements
-    while(std::getline(ssTmp, sSegment, cSeparator))
-    {
-        svFields.push_back(sSegment);
-    }
-
-    if(svFields.size()==0) {
-        nErr = ERR_PARSE;
-    }
-    return nErr;
-}
 

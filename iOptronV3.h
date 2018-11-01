@@ -127,6 +127,7 @@ private:
     int     m_nStatus;
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
+    int     m_nModel;			// save a selectable/comparable version of the model of mount
 
     bool    m_bParked;
 
@@ -148,7 +149,6 @@ private:
     
     int     sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen = SERIAL_BUFFER_SIZE);
     int     readResponse( char *szRespBuffer, int nBufferLen, int nResultLen = SERIAL_BUFFER_SIZE);
-    int     parseFields(const char *pszIn, std::vector<std::string> &svFields, char cSeparator);
 
     int     getInfoAndSettings();
 
