@@ -35,21 +35,13 @@ enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD
 // “0030” means iEQ30 Pro, “0045” means iEQ45 Pro EQ mode, “0060” means CEM60, “0061” means CEM60-EC, “0120” means CEM120, “0121” means CEM120-EC,
 // “0122” means CEM120-EC2, “5010” means Cube II AA mode, “5035” means AZ Mount Pro, “5045” means iEQ45 Pro AA mode.
 
-enum mountModels {CubeIIEQmode = 0010,
-                SmartEQProPlus = 0011,
-                CEM25 = 0025,
-                CEM25_EC = 0026,
-                iEQ30Pro = 0030,
-                iEQ45ProEQmode = 0045,
-                CEM60 = 0060,
-                CEM60_EC = 0061,
-                CEM120 = 0120,
-                CEM120_EC = 0121,
-                CEM120_EC2 = 0122,
-                CubeIIAAmode = 5010,
-                AZMountPro = 5035,
-                iEQ45ProAAmode = 5045
-};
+#define IEQ30PRO  "0030"
+#define CEM60  "0060"
+#define CEM60_EC  "0061"
+#define CEM120  "0120"
+#define CEM120_EC  "0121"
+#define CEM120_EC2  "0122"
+#define UKNOWN_MOUNT "9999"
 
 enum iOptronStatus {STOPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
 
@@ -127,7 +119,7 @@ private:
     int     m_nStatus;
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
-    int     m_nModel;			// save a selectable/comparable version of the model of mount
+    char    m_sModel[5];		// save a selectable/comparable version of the model of mount
 
     bool    m_bParked;
 

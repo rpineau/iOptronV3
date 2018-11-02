@@ -313,57 +313,29 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if(nErr)
         return nErr;
 
-    nModel = atoi(szResp);
-    m_nModel = nModel;   // set member so we can compare on it later
-
-    switch(nModel) {
-        case CubeIIEQmode:
-            strncpy(model, "Cube II EQ mode", strMaxLen);
-            break;
-        case SmartEQProPlus:
-            strncpy(model, "SmartEQ Pro+", strMaxLen);
-            break;
-        case CEM25:
-            strncpy(model, "CEM25(/P)", strMaxLen);
-            break;
-        case CEM25_EC:
-            strncpy(model, "CEM25-EC", strMaxLen);
-            break;
-        case iEQ30Pro:
-            strncpy(model, "iEQ30 Pro", strMaxLen);
-            break;
-        case iEQ45ProEQmode:
-            strncpy(model, "iEQ45 Pro EQ mode", strMaxLen);
-            break;
-        case  CEM60:
-            strncpy(model, "CEM60", strMaxLen);
-            break;
-        case CEM60_EC:
-            strncpy(model, "CEM60-EC", strMaxLen);
-            break;
-        case CEM120:
-            strncpy(model, "CEM120", strMaxLen);
-            break;
-        case CEM120_EC:
-            strncpy(model, "CEM120-EC", strMaxLen);
-            break;
-        case CEM120_EC2:
-            strncpy(model, "CEM120-EC2", strMaxLen);
-            break;
-        case CubeIIAAmode:
-            strncpy(model, "Cube II AA mode", strMaxLen);
-            break;
-        case AZMountPro:
-            strncpy(model, "AZ Mount Pro", strMaxLen);
-            break;
-        case iEQ45ProAAmode:
-            strncpy(model, "iEQ45 Pro AA mode", strMaxLen);
-            break;
-        default :
-            strncpy(model, "Unknown mount", strMaxLen);
-            break;
+    if (strcmp(szResp, IEQ30PRO) == 0) {
+        strncpy(model, "iEQ30 Pro", strMaxLen);
+        strncpy(m_sModel, IEQ30PRO, 5);
+    } else if (strcmp(szResp, CEM60) == 0) {
+        strncpy(model, "CEM60", strMaxLen);
+        strncpy(m_sModel, CEM60, 5);
+    } else if (strcmp(szResp, CEM60_EC) == 0) {
+        strncpy(model, "CEM60-EC", strMaxLen);
+        strncpy(m_sModel, CEM60_EC, 5);
+    } else if (strcmp(szResp, CEM120) == 0) {
+        strncpy(model, "CEM120", strMaxLen);
+        strncpy(m_sModel, CEM120, 5);
+    } else if (strcmp(szResp, CEM120_EC) == 0) {
+        strncpy(model, "CEM120-EC", strMaxLen);
+        strncpy(m_sModel, CEM120_EC, 5);
+    } else if (strcmp(szResp, CEM120_EC2) == 0) {
+        strncpy(model, "CEM120-EC2", strMaxLen);
+        strncpy(m_sModel, CEM120_EC2, 5);
+    } else {
+        strncpy(model, "Unsupported Mount", strMaxLen);
+        strncpy(m_sModel, UKNOWN_MOUNT, 5);
     }
-    return nErr;
+     return nErr;
 }
 
 
@@ -395,15 +367,30 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
 #pragma mark - Mount Coordinates
 int CiOptron::getRaAndDec(double &dRa, double &dDec)
 {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] called \n", timestamp);
+    fflush(Logfile);
+#endif
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
 
     char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE];
     int nRa, nDec;
 
-    nErr = sendCommand(":GEP#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    nErr = sendCommand(":GEP#", szResp, SERIAL_BUFFER_SIZE);
     if(nErr)
         return nErr;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] response to :GEP# %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
     memset(szRa, 0, SERIAL_BUFFER_SIZE);
     memset(szDec, 0, SERIAL_BUFFER_SIZE);
     memcpy(szDec, szResp, 9);
@@ -581,7 +568,7 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] after getInfoAndSettings() status is : %s\n", timestamp, m_nStatus);
+    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] after getInfoAndSettings() status is : %i\n", timestamp, m_nStatus);
     fflush(Logfile);
 #endif
 
@@ -731,59 +718,33 @@ int CiOptron::getRefractionCorrEnabled(bool &bEnabled)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] called \n", timestamp);
+    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] called. Current m_sModel value: %s.  Value of CEM120_EC2 %s\n", timestamp, m_sModel, CEM120_EC2);
     fflush(Logfile);
 #endif
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 
-    switch(m_nModel) {
-        case CubeIIEQmode:
-            bEnabled = false;
-            break;
-        case SmartEQProPlus:
-            bEnabled = false;
-            break;
-        case CEM25:
-            bEnabled = false;
-            break;
-        case CEM25_EC:
-            bEnabled = false;
-            break;
-        case iEQ30Pro:
-            bEnabled = false;
-            break;
-        case iEQ45ProEQmode:
-            bEnabled = false;
-            break;
-        case  CEM60:
-            bEnabled = false;
-            break;
-        case CEM60_EC:
-            bEnabled = false;
-            break;
-        case CEM120:
-            bEnabled = true;
-            break;
-        case CEM120_EC:
-            bEnabled = true;
-            break;
-        case CEM120_EC2:
-            bEnabled = true;
-            break;
-        case CubeIIAAmode:
-            bEnabled = false;
-            break;
-        case AZMountPro:
-            bEnabled = false;
-            break;
-        case iEQ45ProAAmode:
-            bEnabled = false;
-            break;
-        default :
-            bEnabled = false;
-            break;
+    if (strcmp(m_sModel, IEQ30PRO) == 0) {
+        bEnabled = false;
+    } else if (strcmp(m_sModel, CEM60) == 0) {
+        bEnabled = false;
+    } else if (strcmp(m_sModel, CEM60_EC) == 0) {
+        bEnabled = false;
+    } else if (strcmp(m_sModel, CEM120) == 0) {
+        bEnabled = true;
+    } else if (strcmp(m_sModel, CEM120_EC) == 0) {
+        bEnabled = true;
+    } else if (strcmp(m_sModel, CEM120_EC2) == 0) {
+        bEnabled = true;
+    } else {
+        bEnabled = false;
     }
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] call result %s \n", timestamp, bEnabled ? "true":"false");
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
