@@ -663,8 +663,12 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
 #endif
         return ERR_CMDFAILED;
     }
-    dRaRateArcSecPerSec = dTrackRaArcSecPerHr / 3600;
-    dDecRateArcSecPerSec = dTrackDecArcSecPerHr / 3600;
+    // dRaRateArcSecPerSec = dTrackRaArcSecPerHr / 3600;
+    // dDecRateArcSecPerSec = dTrackDecArcSecPerHr / 3600;
+
+    bTrackingOn = true;     // tracking at sidereal
+    dRaRateArcSecPerSec = 0;    // no difference from sideral so it's 0
+    dDecRateArcSecPerSec = 0;   // same
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
