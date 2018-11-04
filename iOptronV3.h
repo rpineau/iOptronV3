@@ -101,7 +101,6 @@ public:
     int unPark();
 
     int getRefractionCorrEnabled(bool &bEnabled);
-    int setRefractionCorrEnabled(bool bEnable);
 
     int getLimits(double &dHoursEast, double &dHoursWest);
 

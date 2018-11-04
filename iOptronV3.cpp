@@ -118,6 +118,14 @@ int CiOptron::getNbSlewRates()
 #pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMaxSize)
 {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getRateName] index was %i\n", timestamp, nZeroBasedIndex);
+    fflush(Logfile);
+#endif
+
     if (nZeroBasedIndex > IOPTRON_NB_SLEW_SPEEDS)
         return IOPTRON_ERROR;
 
@@ -309,6 +317,14 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getMountInfo] called\n", timestamp);
+    fflush(Logfile);
+#endif
+
     nErr = sendCommand(":MountInfo#", szResp, SERIAL_BUFFER_SIZE, 4);
     if(nErr)
         return nErr;
@@ -344,6 +360,15 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
     std::string sFirmwares;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getFirmwareVersion] called\n", timestamp);
+    fflush(Logfile);
+#endif
+
 
     if(!m_bIsConnected)
         return NOT_CONNECTED;
@@ -421,6 +446,13 @@ int CiOptron::syncTo(double dRa, double dDec)
     int nRa, nDec;
     char szCmd[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::syncTo] called Ra : %f  Dec: %f\n", timestamp, dRa, dDec);
+    fflush(Logfile);
+#endif
     nErr = getInfoAndSettings();
     if(nErr)
         return nErr;
@@ -435,8 +467,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::syncTo] Ra : %f\n", timestamp, dRa);
-    fprintf(Logfile, "[%s] [CiOptron::syncTo] Dec : %f\n", timestamp, dDec);
+    fprintf(Logfile, "[%s] [CiOptron::syncTo] verify GPS good and connected.  Ra : %f  Dec: %f\n", timestamp, dRa, dDec);
     fflush(Logfile);
 #endif
 
@@ -498,10 +529,24 @@ int CiOptron::isGPSGood(bool &bGPSGood)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] called \n", timestamp);
+    fflush(Logfile);
+#endif
     nErr = getInfoAndSettings();
 
     bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", timestamp, bGPSGood?"true":"false");
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
@@ -540,7 +585,23 @@ int CiOptron::startSlewTo(double dRa, double dDec)
     int nErr = IOPTRON_OK;
     bool bGPSGood;
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f\n", timestamp, dRa, dDec);
+    fflush(Logfile);
+#endif
+
     nErr = isGPSGood(bGPSGood);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] end. \n", timestamp);
+    fflush(Logfile);
+#endif
     if(nErr)
         return nErr;
 
@@ -554,6 +615,14 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     int nPrecentRemaining;
 
     bComplete = false;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] called\n", timestamp);
+    fflush(Logfile);
+#endif
 
     if(timer.GetElapsedSeconds()<2) {
         // we're checking for comletion too quickly, assume it's moving for now
@@ -671,12 +740,27 @@ int CiOptron::getAtPark(bool &bParked)
 
     bParked = false;
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getAtPark] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
     nErr = getInfoAndSettings();
     if(nErr)
         return nErr;
 
     bParked = m_bParked;
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getAtPark] end. Result: %s \n", timestamp, bParked?"true":"false");
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
@@ -748,32 +832,28 @@ int CiOptron::getRefractionCorrEnabled(bool &bEnabled)
     return nErr;
 }
 
-int CiOptron::setRefractionCorrEnabled(bool bEnable)
-{
-    int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    char szCmd[SERIAL_BUFFER_SIZE];
-
-    if(!m_bIsConnected)
-        return NOT_CONNECTED;
-    if(bEnable) {
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, "!PSreYes;");
-    }
-    else  {
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, "!PSreNo;");
-    }
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
-
-    return nErr;
-}
-
-
+#pragma mark - used by MountDriverInterface
 int CiOptron::Abort()
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
 
-    nErr = sendCommand("!XXxx;", szResp, SERIAL_BUFFER_SIZE);
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::Abort]  abort called.  Stopping slewing and stopping tracking.\n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // stop slewing
+    nErr = sendCommand(":Q#", szResp, SERIAL_BUFFER_SIZE);
+    if(nErr)
+        return nErr;
+
+    // stop tracking
+    nErr = sendCommand(":ST0#", szResp, SERIAL_BUFFER_SIZE);
+
     return nErr;
 }
 
