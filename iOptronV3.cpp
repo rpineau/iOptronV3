@@ -1,38 +1,24 @@
 #include "iOptronV3.h"
 
 // Constructor for IOPTRON
-CiOptron::CiOptron()
-{
+CiOptron::CiOptron() {
 
-	m_bIsConnected = false;
+    m_bIsConnected = false;
 
     m_bParked = false;  // probably not good to assume we're parked.  Power could have shut down or we're at zero position or we're parked
 
-#ifdef IOPTRON_DEBUG
-#if defined(SB_WIN_BUILD)
-    m_sLogfilePath = getenv("HOMEDRIVE");
-    m_sLogfilePath += getenv("HOMEPATH");
-    m_sLogfilePath += "\\iOptronV3Log.txt";
-#elif defined(SB_LINUX_BUILD)
-    m_sLogfilePath = getenv("HOME");
-    m_sLogfilePath += "/iOptronV3Log.txt";
-#elif defined(SB_MAC_BUILD)
-    m_sLogfilePath = getenv("HOME");
-    m_sLogfilePath += "/iOptronV3Log.txt";
-#endif
-	Logfile = fopen(m_sLogfilePath.c_str(), "w");
-#endif
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-	timestamp = asctime(localtime(&ltime));
-	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(Logfile, "[%s] IOPTRON New Constructor Called\n", timestamp);
-    fflush(Logfile);
-#endif
-
 }
 
+void CiOptron::setLogFile(FILE *daFile) {
+    Logfile = daFile;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] IOPTRON setLogFile Called\n", timestamp);
+    fflush(Logfile);
+#endif
+}
 
 CiOptron::~CiOptron(void)
 {
@@ -550,21 +536,111 @@ int CiOptron::isGPSGood(bool &bGPSGood)
     return nErr;
 }
 
-// where Eric left off
 #pragma mark - tracking rates
 int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] called bTrackingOn: %s, bIgnoreRate: %s, bTrackRaArcSecPerHr: %f, bTrackDecArcSecPerHr %f\n", timestamp, bTrackingOn?"true":"false", bIgnoreRates?"true":"false", dTrackRaArcSecPerHr, dTrackDecArcSecPerHr);
+    fflush(Logfile);
+#endif
 
+// :RRnnnnn# - set
+// :GTR# - get with response of nnnnn#
+// These commands select the tracking rate: select sidereal (“:RT0#”), lunar (“:RT1#”), solar (“:RT2#”), King (“:RT3#”), or custom (“:RT4#”).
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] done.  DID NOTHING\n", timestamp);
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
-int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr)
+int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, double &dTrackDecArcSecPerSec)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called.\n", timestamp);
+    fflush(Logfile);
+#endif
 
+    getInfoAndSettings();
+    switch (m_nStatus) {
+        case STOPPED:
+            bTrackingOn = false;
+            dTrackRaArcSecPerSec = 15.0410681;
+            dTrackDecArcSecPerSec = 0.0;
+            break;
+        case PARKED:
+            bTrackingOn = false;
+            dTrackRaArcSecPerSec = 15.0410681;
+            dTrackDecArcSecPerSec = 0.0;
+            break;
+        case HOMED:
+            bTrackingOn = false;
+            dTrackRaArcSecPerSec = 15.0410681;
+            dTrackDecArcSecPerSec = 0.0;
+            break;
+        case TRACKING:
+            if (m_nTrackingRate == TRACKING_SIDEREAL) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.0;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_LUNAR) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.5490149;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_SOLAR) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.0410681;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_KING) {
+                dTrackRaArcSecPerSec = 0.0;
+                dTrackDecArcSecPerSec = 0.0;
+            }
+            break;
+        case PEC_TRACKING:
+            if (m_nTrackingRate == TRACKING_SIDEREAL) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.0;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_LUNAR) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.5490149;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_SOLAR) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 0.0410681;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_KING) {
+                dTrackRaArcSecPerSec = 0.0;
+                dTrackDecArcSecPerSec = 0.0;
+            }
+            break;
+        default:
+            bTrackingOn = false;
+            dTrackRaArcSecPerSec = 15.0410681;
+            dTrackDecArcSecPerSec = 0.0;
+            break;
+    }
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called. bTrackingOn: %s, dTrackRaArcSecPerHr: %f, dTrackDecArcSecPerHr: %f\n", timestamp, bTrackingOn?"true":"false", dTrackRaArcSecPerSec, dTrackDecArcSecPerSec);
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
@@ -573,7 +649,13 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, doub
 int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 {
     int nErr = IOPTRON_OK;
-
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getLimits] called. doing nothing for now\n", timestamp);
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
@@ -893,6 +975,10 @@ int CiOptron::getInfoAndSettings()
     m_nStatus = atoi(szTmp);
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp+19, 1);
+    m_nTrackingRate = atoi(szTmp);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+21, 1);
     m_nTimeSource = atoi(szTmp);
 
@@ -900,7 +986,7 @@ int CiOptron::getInfoAndSettings()
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  lat is : %f, long is: %f, status is: %i, gpsStatus is: %i, timeSource is: %i\n", timestamp, m_fLat, m_fLong, m_nStatus, m_nGPSStatus, m_nTimeSource);
+    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  lat is : %f, long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", timestamp, m_fLat, m_fLong, m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
     fflush(Logfile);
 #endif
 

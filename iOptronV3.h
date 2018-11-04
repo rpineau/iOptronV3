@@ -43,9 +43,11 @@ enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD
 #define CEM120_EC2  "0122"
 #define UKNOWN_MOUNT "9999"
 
-enum iOptronStatus {STOPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
+enum iOptronStatus {STOPPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
 
 enum iOptronGPSStatus {GPS_BROKE_OR_MISSING=0, GPS_WORKING_NOT_RECEIVED_DATA, GPS_RECEIVING_VALID_DATA};
+
+enum iOptronTrackingRate {TRACKING_SIDEREAL=0, TRACKING_LUNAR, TRACKING_SOLAR, TRACKING_KING, TRACKING_CUSTOM};
 
 enum iOptronTimeSource {RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
 
@@ -65,6 +67,9 @@ class CiOptron
 public:
 	CiOptron();
 	~CiOptron();
+#ifdef IOPTRON_DEBUG
+	void setLogFile(FILE *);
+#endif
 	
 	int Connect(char *pszPort);
 	int Disconnect();
@@ -115,7 +120,8 @@ private:
 
     float   m_fLat;
     float   m_fLong;
-    int     m_nStatus;
+    int     m_nStatus;			// defined in iOptronStatus (stopped tracking slewing.. etc)
+    int  	m_nTrackingRate;    // sidereal, lunar, solar, king, custom defined by iOptronTrackingRate
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
     char    m_sModel[5];		// save a selectable/comparable version of the model of mount

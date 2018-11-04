@@ -33,9 +33,10 @@ X2Mount::X2Mount(const char* pszDriverSelection,
     m_sLogfilePath += "/iOptronV3_X2_Logfile.txt";
 #endif
 	LogFile = fopen(m_sLogfilePath.c_str(), "w");
+    m_iOptronV3.setLogFile(LogFile);
 #endif
 	
-	
+
 	m_bSynced = false;
 	m_bParked = false;
     m_bLinked = false;
@@ -642,15 +643,13 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec)
 {
     int nErr = SB_OK;
-    double dTrackRaArcSecPerHr;
-    double dTrackDecArcSecPerHr;
 
     if(!m_bLinked)
         return ERR_NOLINK;
 
     X2MutexLocker ml(GetMutex());
 
-    nErr = m_iOptronV3.getTrackRates(bTrackingOn, dTrackRaArcSecPerHr, dTrackDecArcSecPerHr);
+    nErr = m_iOptronV3.getTrackRates(bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
     if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
@@ -663,12 +662,6 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
 #endif
         return ERR_CMDFAILED;
     }
-    // dRaRateArcSecPerSec = dTrackRaArcSecPerHr / 3600;
-    // dDecRateArcSecPerSec = dTrackDecArcSecPerHr / 3600;
-
-    bTrackingOn = true;     // tracking at sidereal
-    dRaRateArcSecPerSec = 0;    // no difference from sideral so it's 0
-    dDecRateArcSecPerSec = 0;   // same
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -1037,6 +1030,15 @@ double X2Mount::flipHourAngle() {
 int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 {
     int nErr = SB_OK;
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] gemLimits called.\n", timestamp);
+        fflush(LogFile);
+    }
+#endif
     if(!m_bLinked)
         return ERR_NOLINK;
 
