@@ -147,7 +147,7 @@ int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned in
     }
 
     // select rate.  :SRn# n=1..7  1=1x, 2=2x, 3=8x, 4=16x, 5=64x, 6=128x, 7=256x
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%.1u#", nRate+1);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%1d#", nRate+1);
     nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
 
     // figure out direction
