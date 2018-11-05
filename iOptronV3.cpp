@@ -259,15 +259,24 @@ int CiOptron::readResponse(char *szRespBuffer, int nBufferLen, int nResultLen)
     do {
         nErr = m_pSerx->readFile(pszBufPtr, 1, ulBytesRead, MAX_TIMEOUT);
         if(nErr) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 3
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] [CiOptron::readResponse] readFile error\n", timestamp);
+            fprintf(Logfile, "[%s] [CiOptron::readResponse] szRespBuffer = %s\n", timestamp, szRespBuffer);
             fflush(Logfile);
 #endif
             return nErr;
         }
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] CiOptron::readResponse Timeout while waiting for response from controller\n", timestamp);
+        fflush(Logfile);
+#endif
+
 
         if (ulBytesRead !=1) {// timeout
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
