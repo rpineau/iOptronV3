@@ -52,7 +52,7 @@ enum iOptronTrackingRate {TRACKING_SIDEREAL=0, TRACKING_LUNAR, TRACKING_SOLAR, T
 enum iOptronTimeSource {RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
 
 #define SERIAL_BUFFER_SIZE 256
-#define MAX_TIMEOUT 500         // 500 ms
+#define MAX_TIMEOUT 1000         // was 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
 #define ERR_PARSE   1
 
@@ -92,6 +92,8 @@ public:
 
     int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr);
     int getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr);
+    int setSiderealTrackingOn();
+    int setTrackingOff();
 
     int startSlewTo(double dRa, double dDec);
     int isSlewToComplete(bool &bComplete);

@@ -537,6 +537,63 @@ int CiOptron::isGPSGood(bool &bGPSGood)
 }
 
 #pragma mark - tracking rates
+int CiOptron::setSiderealTrackingOn() {
+    // special implementation avoiding manually setting the tracking rate
+
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setSiderealTrackingOn] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(":RT0#", szResp, SERIAL_BUFFER_SIZE, 1);  // use macro command to set this
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setSiderealTrackingOn] finished.  Result: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
+    return nErr;
+
+}
+
+#pragma mark - tracking rates
+int CiOptron::setTrackingOff() {
+    // special implementation avoiding manually setting the tracking rate
+
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setTrackingOff] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(":ST0#", szResp, SERIAL_BUFFER_SIZE, 1);  // use macro command to set this
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setTrackingOff] finished.  Result: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
+    return nErr;
+
+}
+
+#pragma mark - tracking rates
 int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr)
 {
     int nErr = IOPTRON_OK;

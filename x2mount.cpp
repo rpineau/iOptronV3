@@ -286,6 +286,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
         return ;
 
     if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set the home polarbutton
+        X2MutexLocker ml(GetMutex());
         uiex->propertyDouble("parkAz", "value", dParkAz);
         uiex->propertyDouble("parkAlt", "value", dParkAlt);
         nErr = m_iOptronV3.setParkPosition(dParkAz, dParkAlt);
@@ -366,12 +367,12 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
 }
 void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 {
-	str = "iOptron V3 Mount";
+	str = "iOptron CEM120xx V3 Mount";
 	
 }
 void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 {
-	str = "iOptron V3 Mount";
+	str = "iOptron CEM120xx V3 Mount by Eric Roubal and Rodolphe Pineau";
 	
 }
 void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
@@ -694,7 +695,8 @@ int X2Mount::siderealTrackingOn()
     }
 #endif
 
-    nErr = setTrackingRates( true, true, 0.0, 0.0);
+    nErr = m_iOptronV3.setSiderealTrackingOn();
+
     if(nErr)
         return ERR_CMDFAILED;
 
@@ -728,7 +730,7 @@ int X2Mount::trackingOff()
         fflush(LogFile);
     }
 #endif
-    nErr = setTrackingRates( false, true, 0.0, 0.0);
+    nErr = m_iOptronV3.setTrackingOff();
     if(nErr)
         nErr = ERR_CMDFAILED;
 
