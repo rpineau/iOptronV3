@@ -6,7 +6,7 @@ CiOptron::CiOptron() {
     m_bIsConnected = false;
 
     m_bParked = false;  // probably not good to assume we're parked.  Power could have shut down or we're at zero position or we're parked
-
+    m_nGPSStatus = 0;  // unread to start (stating broke or missing)
 }
 
 void CiOptron::setLogFile(FILE *daFile) {
@@ -143,26 +143,26 @@ int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned in
         return nErr;
     if (m_nStatus == SLEWING) {
         // interrupt slewing since user pressed button
-        nErr = sendCommand(":Q#", szResp, SERIAL_BUFFER_SIZE);
+        nErr = sendCommand(":Q#", szResp, 1);
     }
 
     // select rate.  :SRn# n=1..7  1=1x, 2=2x, 3=8x, 4=16x, 5=64x, 6=128x, 7=256x
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SR%1d#", nRate+1);
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(szCmd, szResp, 1);
 
     // figure out direction
     switch(Dir){
         case MountDriverInterface::MD_NORTH:
-            nErr = sendCommand(":mn#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":mn#", szResp, 0);
             break;
         case MountDriverInterface::MD_SOUTH:
-            nErr = sendCommand(":ms#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":ms#", szResp, 0);
             break;
         case MountDriverInterface::MD_EAST:
-            nErr = sendCommand(":me#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":me#", szResp, 0);
             break;
         case MountDriverInterface::MD_WEST:
-            nErr = sendCommand(":mw#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":mw#", szResp, 0);
             break;
     }
 
@@ -186,11 +186,11 @@ int CiOptron::stopOpenLoopMove()
     switch(m_nOpenLoopDir){
         case MountDriverInterface::MD_NORTH:
         case MountDriverInterface::MD_SOUTH:
-            nErr = sendCommand(":qD#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":qD#", szResp, 1);
             break;
         case MountDriverInterface::MD_EAST:
         case MountDriverInterface::MD_WEST:
-            nErr = sendCommand(":qR#", szResp, SERIAL_BUFFER_SIZE);
+            nErr = sendCommand(":qR#", szResp, 1);
             break;
     }
 
@@ -199,7 +199,7 @@ int CiOptron::stopOpenLoopMove()
 
 
 #pragma mark - IOPTRON communication
-int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen, int nExpectedResultLen)
+int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResultLen)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -221,7 +221,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
         return nErr;
 
     // read response
-    nErr = readResponse(szResp, nResultMaxLen, nExpectedResultLen);
+    nErr = readResponse(szResp, nExpectedResultLen);
     if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         ltime = time(NULL);
@@ -241,61 +241,48 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nResultMaxLen
 #endif
 
     if(pszResult)
-        strncpy(pszResult, szResp, nResultMaxLen);
+        strncpy(pszResult, szResp, SERIAL_BUFFER_SIZE);
 
     return nErr;
 }
 
-int CiOptron::readResponse(char *szRespBuffer, int nBufferLen, int nResultLen)
+int CiOptron::readResponse(char *szRespBuffer, int nBytesToRead)
 {
     int nErr = IOPTRON_OK;
-    unsigned long ulBytesRead = 0;
-    unsigned long ulTotalBytesRead = 0;
+    unsigned long ulBytesActuallyRead = 0;
     char *pszBufPtr;
 
-    memset(szRespBuffer, 0, (size_t) nBufferLen);
+    if (nBytesToRead == 0)
+        return nErr;
+
+    memset(szRespBuffer, 0, (size_t) SERIAL_BUFFER_SIZE);
     pszBufPtr = szRespBuffer;
 
-    do {
-        nErr = m_pSerx->readFile(pszBufPtr, 1, ulBytesRead, MAX_TIMEOUT);
-        if(nErr) {
-
+    nErr = m_pSerx->readFile(pszBufPtr, nBytesToRead, ulBytesActuallyRead, MAX_TIMEOUT);
+    if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 3
-            ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] [CiOptron::readResponse] szRespBuffer = %s\n", timestamp, szRespBuffer);
-            fflush(Logfile);
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CiOptron::readResponse] szRespBuffer = %s\n", timestamp, szRespBuffer);
+        fflush(Logfile);
 #endif
-            return nErr;
-        }
+        return nErr;
+    }
+
+    if (ulBytesActuallyRead !=nBytesToRead) { // timeout or something screwed up with command passed in
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] CiOptron::readResponse Timeout while waiting for response from controller\n", timestamp);
+        fprintf(Logfile, "[%s] CiOptron::readResponse number of bytes read not what expected.  Number of bytes read: %i.  Number expected: %i\n", timestamp, ulBytesActuallyRead, nBytesToRead);
         fflush(Logfile);
 #endif
 
+        nErr = IOPTRON_BAD_CMD_RESPONSE;
+    }
 
-        if (ulBytesRead !=1) {// timeout
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(Logfile, "[%s] CiOptron::readResponse Timeout while waiting for response from controller\n", timestamp);
-            fflush(Logfile);
-#endif
-
-            nErr = IOPTRON_BAD_CMD_RESPONSE;
-            break;
-        }
-        ulTotalBytesRead += ulBytesRead;
-        if(ulTotalBytesRead == nResultLen)
-            break;
-    } while ( *pszBufPtr++ != '#' && ulTotalBytesRead < nBufferLen  );
-
-    if(ulTotalBytesRead && *(pszBufPtr-1) == '#')
+    if(ulBytesActuallyRead && *(pszBufPtr-1) == '#')
         *(pszBufPtr-1) = 0; //remove the #
 
     return nErr;
@@ -320,7 +307,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     fflush(Logfile);
 #endif
 
-    nErr = sendCommand(":MountInfo#", szResp, SERIAL_BUFFER_SIZE, 4);
+    nErr = sendCommand(":MountInfo#", szResp, 4);
     if(nErr)
         return nErr;
 
@@ -368,14 +355,14 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    nErr = sendCommand(":FW1#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":FW1#", szResp, 13);
     if(nErr)
         return nErr;
 
     sFirmwares+= szResp;
     sFirmwares+= " ";
 
-    nErr = sendCommand(":FW2#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":FW2#", szResp, 13);
     if(nErr)
         return nErr;
     sFirmwares+= szResp;
@@ -400,7 +387,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE];
     int nRa, nDec;
 
-    nErr = sendCommand(":GEP#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":GEP#", szResp, 21);
     if(nErr)
         return nErr;
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -484,7 +471,7 @@ int CiOptron::syncTo(double dRa, double dDec)
     fflush(Logfile);
 #endif
 
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set RA
+    nErr = sendCommand(szCmd, szResp, 1);  // set RA
     if(nErr) {
         return nErr;
     }
@@ -503,13 +490,13 @@ int CiOptron::syncTo(double dRa, double dDec)
     fflush(Logfile);
 #endif
 
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE);  // set DEC
+    nErr = sendCommand(szCmd, szResp, 1);  // set DEC
     if(nErr) {
         // clear RA?
         return nErr;
     }
 
-    nErr = sendCommand(":CM#", szResp, SERIAL_BUFFER_SIZE);  // call Snc
+    nErr = sendCommand(":CM#", szResp, 1);  // call Snc
     if(nErr) {
         // clear RA?
         // clear DEC?
@@ -531,7 +518,6 @@ int CiOptron::isGPSGood(bool &bGPSGood)
     fprintf(Logfile, "[%s] [CiOptron::isGPSGood] called \n", timestamp);
     fflush(Logfile);
 #endif
-    nErr = getInfoAndSettings();
 
     bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
 
@@ -559,7 +545,7 @@ int CiOptron::setSiderealTrackingOn() {
     fflush(Logfile);
 #endif
 
-    nErr = sendCommand(":RT0#", szResp, SERIAL_BUFFER_SIZE, 1);  // use macro command to set this
+    nErr = sendCommand(":RT0#", szResp, 1);  // use macro command to set this
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -588,7 +574,7 @@ int CiOptron::setTrackingOff() {
     fflush(Logfile);
 #endif
 
-    nErr = sendCommand(":ST0#", szResp, SERIAL_BUFFER_SIZE, 1);  // use macro command to set this
+    nErr = sendCommand(":ST0#", szResp, 1);  // use macro command to set this
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -809,7 +795,7 @@ int CiOptron::parkMount()
     //      from the doc : "This command parks to the most recently defined parking position" ... so we need to define it
     //      if it's not already defined (and saved) in the mount
     // or goto ?    // RP : Goto and Park should be different.
-    nErr = sendCommand(":MP1#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to park
+    nErr = sendCommand(":MP1#", szResp, 1);  // merely ask to park
     if(nErr)
         return nErr;
 
@@ -838,7 +824,7 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
     fflush(Logfile);
 #endif
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAzArcSec));
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE, 1);
+    nErr = sendCommand(szCmd, szResp, 1);
     if(nErr)
         return nErr;
 
@@ -852,8 +838,8 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
     fprintf(Logfile, "[%s] [CiOptron::markParkPosition] setting  Park Alt to : %d\n", timestamp, int(dAltArcSec));
     fflush(Logfile);
 #endif
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAltArcSec));
-    nErr = sendCommand(szCmd, szResp, SERIAL_BUFFER_SIZE, 1);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPH%09d#", int(dAltArcSec));
+    nErr = sendCommand(szCmd, szResp, 1);
     if(nErr)
         return nErr;
 
@@ -868,7 +854,7 @@ int CiOptron::getParkPosition(double &dAz, double &dAlt)
     char szParkAz[SERIAL_BUFFER_SIZE], szParkAlt[SERIAL_BUFFER_SIZE];
     int nAzArcSec, nAltArcSec;
 
-    nErr = sendCommand(":GPC#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    nErr = sendCommand(":GPC#", szResp, 18);  // merely ask to unpark
     if(nErr)
         return nErr;
     memset(szParkAz, 0, SERIAL_BUFFER_SIZE);
@@ -924,7 +910,7 @@ int CiOptron::unPark()
     fprintf(Logfile, "[%s] [CiOptron::unPark] \n", timestamp);
     fflush(Logfile);
 #endif
-    nErr = sendCommand(":MP0#", szResp, SERIAL_BUFFER_SIZE, 1);  // merely ask to unpark
+    nErr = sendCommand(":MP0#", szResp, 1);  // merely ask to unpark
     if(nErr)
         return nErr;
 
@@ -995,12 +981,12 @@ int CiOptron::Abort()
 #endif
 
     // stop slewing
-    nErr = sendCommand(":Q#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":Q#", szResp, 1);
     if(nErr)
         return nErr;
 
     // stop tracking
-    nErr = sendCommand(":ST0#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":ST0#", szResp, 1);
 
     return nErr;
 }
@@ -1012,7 +998,7 @@ int CiOptron::getInfoAndSettings()
     char szResp[SERIAL_BUFFER_SIZE];
     char szTmp[SERIAL_BUFFER_SIZE];
 
-    nErr = sendCommand(":GLS#", szResp, SERIAL_BUFFER_SIZE);
+    nErr = sendCommand(":GLS#", szResp, 24);
     if(nErr)
         return nErr;
 
