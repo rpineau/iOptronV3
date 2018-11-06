@@ -545,7 +545,14 @@ int CiOptron::setSiderealTrackingOn() {
     fflush(Logfile);
 #endif
 
+    // Set tracking to sidereal
     nErr = sendCommand(":RT0#", szResp, 1);  // use macro command to set this
+
+    if (nErr)
+        return nErr;
+
+    // and turn on
+    nErr = sendCommand(":ST1#", szResp, 1);  // and start tracking
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -718,6 +725,9 @@ int CiOptron::startSlewTo(double dRa, double dDec)
 {
     int nErr = IOPTRON_OK;
     bool bGPSGood;
+    char szCmd[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+    double dRaArcSec, dDecArcSec;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -728,6 +738,26 @@ int CiOptron::startSlewTo(double dRa, double dDec)
 #endif
 
     nErr = isGPSGood(bGPSGood);
+
+    if (!bGPSGood)
+        return ERR_ABORTEDPROCESS;
+
+//    dRaArcSec = (dRa * 60 * 60) / 0.01;
+//    // :SRATTTTTTTTT#   ra
+//    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
+//    nErr = sendCommand(szCmd, szResp, 1);
+//    if(nErr)
+//        return nErr;
+//
+//    dDecArcSec = (dDec * 60 * 60) / 0.01;
+//    // :SdsTTTTTTTT#    dec
+//    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%08d#", int(dDecArcSec));
+//    nErr = sendCommand(szCmd, szResp, 1);
+//    if(nErr)
+//        return nErr;
+
+    // :MS1#   slew to them
+    // if ok, set m_nStatus == SLEWING manually and timer.Reset();  // keep TSX under control
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -746,9 +776,6 @@ int CiOptron::isSlewToComplete(bool &bComplete)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    int nPrecentRemaining;
-
-    bComplete = false;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -758,28 +785,29 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     fflush(Logfile);
 #endif
 
-    if(timer.GetElapsedSeconds()<2) {
-        // we're checking for comletion too quickly, assume it's moving for now
-        return nErr;
+    if(timer.GetElapsedSeconds()>2) {
+        // go ahead and check by calling mount for status
+        timer.Reset();
+
+        nErr = getInfoAndSettings();
+
+    } else {
+        // we're checking for comletion too quickly and too often for no reason, just use local variable
     }
-
-    nErr = getInfoAndSettings();
-    if(nErr)
-        return nErr;
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] after getInfoAndSettings() status is : %i\n", timestamp, m_nStatus);
-    fflush(Logfile);
-#endif
 
     if (m_nStatus == SLEWING || m_nStatus == FLIPPING) {
         bComplete = false;
     } else {
         bComplete = true;
     }
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isSlewToComplete] returning : %s\n", timestamp, bComplete?"true":"false");
+    fflush(Logfile);
+#endif
 
     return nErr;
 }
@@ -882,9 +910,10 @@ int CiOptron::getAtPark(bool &bParked)
     fflush(Logfile);
 #endif
 
-    nErr = getInfoAndSettings();
-    if(nErr)
-        return nErr;
+//    nErr = getInfoAndSettings();
+//    if(nErr)
+//        return nErr;
+// so much chatter going on, I will assume all the extra calls are filling m_bParked without me having to call again
 
     bParked = m_bParked;
 
@@ -1016,7 +1045,7 @@ int CiOptron::getInfoAndSettings()
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+9, 8);
-    m_fLat = atof(szTmp);
+    m_fLat = atof(szTmp)-32400000;
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+17, 1);
