@@ -48,13 +48,14 @@ int CiOptron::Connect(char *pszPort)
 #endif
 
     // 9600 8N1 (non CEM120xxx mounts) or 115200 (CEM120xx mounts)
-    if(m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0)
+    nErr = m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
+    if(nErr == 0)
         m_bIsConnected = true;
     else
         m_bIsConnected = false;
 
     if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
+        return nErr;
 
     // get mount model to see if we're properly connected
     nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
