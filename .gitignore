@@ -8,3 +8,4 @@ build
 Release
 *.pkg
 *.so
+*.pkg

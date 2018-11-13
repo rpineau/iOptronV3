@@ -320,7 +320,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 #endif
 
     if (!strcmp(pszEvent, "on_pushButtonParked_clicked")) { //Set the home polarbutton
-        X2MutexLocker ml(GetMutex());
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
@@ -338,7 +337,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             uiex->messageBox("Error",szTmpBuf);
         }
     } else if (!strcmp(pszEvent, "on_pushButtonGotoZero_clicked")) {
-        X2MutexLocker ml(GetMutex());
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
@@ -355,7 +353,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
         }
 
     } else if (!strcmp(pszEvent, "on_pushButtonFindZero_clicked")) {
-        X2MutexLocker ml(GetMutex());
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
@@ -371,7 +368,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             uiex->messageBox("Error",szTmpBuf);
         }
     } else if (!strcmp(pszEvent, "on_pushButtonGotoFlats_clicked")) {
-        X2MutexLocker ml(GetMutex());
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
