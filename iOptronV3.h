@@ -154,7 +154,10 @@ private:
     const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "1x", "2x", "8x", "16x",  "64x", "128x", "256x"};
 
     CStopWatch      timer;
+    CStopWatch      cmdTimer;
 
+    float       m_dRa;
+    float       m_dDec;
 
 #ifdef IOPTRON_DEBUG
     std::string m_sLogfilePath;
