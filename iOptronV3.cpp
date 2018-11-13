@@ -703,6 +703,116 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     return nErr;
 }
 
+int CiOptron::gotoZeroPosition() {
+    // special implementation for CEM120xx and CEM60xx only
+
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::gotoZeroPosition] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // Goto Zero position / home position
+    nErr = sendCommand(":MH#", szResp, 1);
+
+    if (nErr)
+        return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::gotoZeroPosition] finished.  Result: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
+    return nErr;
+
+}
+
+int CiOptron::gotoFlatsPosition() {
+    // special convience function to take flats
+
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // set alt/az position
+    // altitude: :SasTTTTTTTT# (Valid data range is [-32,400,000, 32,400,000])
+    nErr = sendCommand(":Sa+32400000#", szResp, 1);  // point straight up
+    if (nErr)
+        return nErr;
+
+    // azimuth: :SzTTTTTTTTT# (Valid data range is [0, 129,600,000])
+    nErr = sendCommand(":Sz000000000#", szResp, 1);  // point north
+    if (nErr)
+        return nErr;
+
+    // Goto Zero alt/az position defined
+    nErr = sendCommand(":MSS#", szResp, 1);
+    if (nErr)
+        return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] MSS slew command finished.  Result (want 1): %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+    // dont track
+    nErr = sendCommand(":ST0#", szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] finished.  Result of final stop-tracking command (want 0): %i\n", timestamp, nErr);
+    fflush(Logfile);
+#endif
+
+    return nErr;
+
+}
+
+int CiOptron::findZeroPosition() {
+    // special implementation for CEM120xx and CEM60xx only
+
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::calibrateZeroPosition] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // Find Zero position / home position
+    nErr = sendCommand(":MSH#", szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::calibrateZeroPosition] finished.  Result: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
+    return nErr;
+
+}
 
 #pragma mark - Limis
 int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
@@ -823,6 +933,7 @@ int CiOptron::parkMount()
     //      from the doc : "This command parks to the most recently defined parking position" ... so we need to define it
     //      if it's not already defined (and saved) in the mount
     // or goto ?    // RP : Goto and Park should be different.
+    // ER: the scope comes with park already set
     nErr = sendCommand(":MP1#", szResp, 1);  // merely ask to park
     if(nErr)
         return nErr;
@@ -943,16 +1054,17 @@ int CiOptron::unPark()
     if(nErr)
         return nErr;
 
-    nErr = setTrackingRates(true, true, 0, 0); // sidereal
+    nErr = setSiderealTrackingOn();  // use simple command which may use "King" tracking which is better than straight sidereal
+
     if(nErr) {
 #ifdef IOPTRON_DEBUG
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CiOptron::unPark] Error setting track rate to Sidereal\n", timestamp);
+        fprintf(Logfile, "[%s] [CiOptron::unPark] Error setting tracking to sidereal\n", timestamp);
         fflush(Logfile);
 #endif
-        snprintf(m_szLogBuffer,IOPTRON_LOG_BUFFER_SIZE,"[CiOptron::unPark] Error setting track rate to Sidereal");
+        snprintf(m_szLogBuffer,IOPTRON_LOG_BUFFER_SIZE,"[CiOptron::unPark] Error setting tracking to sidereal");
         m_pLogger->out(m_szLogBuffer);
     }
     return nErr;

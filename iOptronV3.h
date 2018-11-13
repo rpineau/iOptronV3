@@ -113,6 +113,10 @@ public:
 
     int Abort();
 
+    int gotoZeroPosition();
+    int gotoFlatsPosition();
+    int findZeroPosition();
+
 private:
 
     SerXInterface                       *m_pSerx;
