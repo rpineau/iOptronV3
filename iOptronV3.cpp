@@ -10,8 +10,10 @@ CiOptron::CiOptron() {
 
     m_dRa = 0.0;
     m_dDec = 0.0;
-    timer.Reset();
+    slewToTimer.Reset();
     cmdTimer.Reset();
+    trackRatesTimer.Reset();
+    getAtParkTimer.Reset();
 }
 
 void CiOptron::setLogFile(FILE *daFile) {
@@ -399,6 +401,13 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     if(cmdTimer.GetElapsedSeconds()<0.1) {
         dRa = m_dRa;
         dDec = m_dDec;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] SHORT circuiting TSX from going nuts on the mount. \n", timestamp);
+        fflush(Logfile);
+#endif
         return nErr;
     }
     cmdTimer.Reset();
@@ -652,7 +661,12 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     fflush(Logfile);
 #endif
 
-    getInfoAndSettings();
+    // don't ask the mount its general status too often .. doesn't change much
+    if(trackRatesTimer.GetElapsedSeconds()>1.0) {
+        getInfoAndSettings();
+        trackRatesTimer.Reset();
+    }
+
     switch (m_nStatus) {
         case STOPPED:
             bTrackingOn = false;
@@ -715,7 +729,7 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called. bTrackingOn: %s, dTrackRaArcSecPerHr: %f, dTrackDecArcSecPerHr: %f\n", timestamp, bTrackingOn?"true":"false", dTrackRaArcSecPerSec, dTrackDecArcSecPerSec);
+    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] done. bTrackingOn: %s, dTrackRaArcSecPerHr: %f, dTrackDecArcSecPerHr: %f\n", timestamp, bTrackingOn?"true":"false", dTrackRaArcSecPerSec, dTrackDecArcSecPerSec);
     fflush(Logfile);
 #endif
     return nErr;
@@ -850,11 +864,12 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 
 
 #pragma mark - Slew
-int CiOptron::startSlewTo(double dRa, double dDec)
+int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 {
     int nErr = IOPTRON_OK;
     bool bGPSGood;
-    char szCmd[SERIAL_BUFFER_SIZE];
+    char szCmdRa[SERIAL_BUFFER_SIZE];
+    char szCmdDec[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
     double dRaArcSec, dDecArcSec;
 
@@ -862,7 +877,7 @@ int CiOptron::startSlewTo(double dRa, double dDec)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f\n", timestamp, dRa, dDec);
+    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f\n", timestamp, dRaInDecimalHours, dDecInDecimalDegrees);
     fflush(Logfile);
 #endif
 
@@ -871,22 +886,38 @@ int CiOptron::startSlewTo(double dRa, double dDec)
     if (!bGPSGood)
         return ERR_ABORTEDPROCESS;
 
-//    dRaArcSec = (dRa * 60 * 60) / 0.01;
-//    // :SRATTTTTTTTT#   ra
-//    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
-//    nErr = sendCommand(szCmd, szResp, 1);
-//    if(nErr)
-//        return nErr;
-//
-//    dDecArcSec = (dDec * 60 * 60) / 0.01;
-//    // :SdsTTTTTTTT#    dec
-//    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%08d#", int(dDecArcSec));
-//    nErr = sendCommand(szCmd, szResp, 1);
-//    if(nErr)
-//        return nErr;
+    dRaArcSec = (dRaInDecimalHours * 60 * 60) / 0.01;  // actually hundreths of arc sec
+    // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000]. Note: The resolution is 0.01 arc-second.
+    snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
+    nErr = sendCommand(szCmdRa, szResp, 1);
+    if(nErr)
+        return nErr;
+
+    dDecArcSec = (dDecInDecimalDegrees * 60 * 60) / 0.01; // actually hundreths of arc sec - converts same way
+    // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000]. Note: The resolution is 0.01 arc-second.
+    snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+08d#", int(dDecArcSec));
+    nErr = sendCommand(szCmdDec, szResp, 1);
+    if(nErr)
+        return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s\n", timestamp, szCmdRa, szCmdDec);
+    fflush(Logfile);
+#endif
 
     // :MS1#   slew to them
-    // if ok, set m_nStatus == SLEWING manually and timer.Reset();  // keep TSX under control
+    nErr = sendCommand(":MS1#", szResp, 1);
+    if (nErr) {
+        return nErr;
+    } else if (atoi(szResp) == 0) {
+        return ERR_LIMITSEXCEEDED;
+    } else {
+        m_nStatus == SLEWING;
+        slewToTimer.Reset();  // keep TSX under control
+    }
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -914,9 +945,9 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     fflush(Logfile);
 #endif
 
-    if(timer.GetElapsedSeconds()>2) {
+    if(slewToTimer.GetElapsedSeconds()>2) {
         // go ahead and check by calling mount for status
-        timer.Reset();
+        slewToTimer.Reset();
 
         nErr = getInfoAndSettings();
 
@@ -1039,11 +1070,16 @@ int CiOptron::getAtPark(bool &bParked)
     fprintf(Logfile, "[%s] [CiOptron::getAtPark] called \n", timestamp);
     fflush(Logfile);
 #endif
+    if(getAtParkTimer.GetElapsedSeconds()>2) {
+        // go ahead and check by calling mount for status
+        getAtParkTimer.Reset();
 
-//    nErr = getInfoAndSettings();
-//    if(nErr)
-//        return nErr;
-// so much chatter going on, I will assume all the extra calls are filling m_bParked without me having to call again
+        nErr = getInfoAndSettings();
+        if(nErr)
+          return nErr;
+
+    }
+    // use m_bParked even if it was cached
 
     bParked = m_bParked;
 
@@ -1198,7 +1234,7 @@ int CiOptron::getInfoAndSettings()
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  lat is : %f, long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", timestamp, m_fLat, m_fLong, m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
+    fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS lat is : %f, GPS long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", timestamp, (m_fLat*0.01)/ 60 /60 , (m_fLong*0.01)/ 60 /60 , m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
     fflush(Logfile);
 #endif
 

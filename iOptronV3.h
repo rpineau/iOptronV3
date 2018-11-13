@@ -95,7 +95,7 @@ public:
     int setSiderealTrackingOn();
     int setTrackingOff();
 
-    int startSlewTo(double dRa, double dDec);
+    int startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees);
     int isSlewToComplete(bool &bComplete);
 
     int startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate);
@@ -157,8 +157,10 @@ private:
 
     const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "1x", "2x", "8x", "16x",  "64x", "128x", "256x"};
 
-    CStopWatch      timer;
+    CStopWatch      slewToTimer;
     CStopWatch      cmdTimer;
+    CStopWatch      trackRatesTimer;
+    CStopWatch      getAtParkTimer;
 
     float       m_dRa;
     float       m_dDec;
