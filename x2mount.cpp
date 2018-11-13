@@ -256,10 +256,10 @@ int X2Mount::execModalSettingsDialog(void)
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
-        dx->setEnabled("pushButton_parked", true);
-        dx->setEnabled("pushButton_gotoZero", true);
-        dx->setEnabled("pushButton_findZero", true);
-        dx->setEnabled("pushButton_gotoFlats", true);
+        dx->setEnabled("pushButtonParked", true);
+        dx->setEnabled("pushButtonGotoZero", true);
+        dx->setEnabled("pushButtonFindZero", true);
+        dx->setEnabled("pushButtonGotoFlats", true);
         m_iOptronV3.getParkPosition(dParkAz, dParkAlt);
         dx->setPropertyDouble("parkAz", "value", dParkAz);
         dx->setPropertyDouble("parkAlt", "value", dParkAlt);
@@ -267,10 +267,10 @@ int X2Mount::execModalSettingsDialog(void)
     else {
         dx->setEnabled("parkAz", false);
         dx->setEnabled("parkAlt", false);
-        dx->setEnabled("pushButton_parked", false);
-        dx->setEnabled("pushButton_gotoZero", false);
-        dx->setEnabled("pushButton_findZero", false);
-        dx->setEnabled("pushButton_gotoFlats", false);
+        dx->setEnabled("pushButtonParked", false);
+        dx->setEnabled("pushButtonGotoZero", false);
+        dx->setEnabled("pushButtonFindZero", false);
+        dx->setEnabled("pushButtonGotoFlats", false);
     }
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))
