@@ -45,8 +45,6 @@
 #define DEF_PORT_NAME					"/dev/cu.KeySerial1"
 #endif
 
-#define DRIVER_MAX_STRING 256
-
 /*!
 \brief The X2Mount example.
 

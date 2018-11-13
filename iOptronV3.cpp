@@ -7,6 +7,11 @@ CiOptron::CiOptron() {
 
     m_bParked = false;  // probably not good to assume we're parked.  Power could have shut down or we're at zero position or we're parked
     m_nGPSStatus = 0;  // unread to start (stating broke or missing)
+
+    m_dRa = 0.0;
+    m_dDec = 0.0;
+    timer.Reset();
+    cmdTimer.Reset();
 }
 
 void CiOptron::setLogFile(FILE *daFile) {
@@ -48,13 +53,14 @@ int CiOptron::Connect(char *pszPort)
 #endif
 
     // 9600 8N1 (non CEM120xxx mounts) or 115200 (CEM120xx mounts)
-    if(m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0)
+    nErr = m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
+    if(nErr == 0)
         m_bIsConnected = true;
     else
         m_bIsConnected = false;
 
     if(!m_bIsConnected)
-        return ERR_COMMNOLINK;
+        return nErr;
 
     // get mount model to see if we're properly connected
     nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
@@ -374,6 +380,8 @@ int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
 #pragma mark - Mount Coordinates
 int CiOptron::getRaAndDec(double &dRa, double &dDec)
 {
+
+
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
@@ -387,6 +395,13 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE];
     int nRa, nDec;
 
+    // don't ask the mount too often, returned cached value
+    if(cmdTimer.GetElapsedSeconds()<0.1) {
+        dRa = m_dRa;
+        dDec = m_dDec;
+        return nErr;
+    }
+    cmdTimer.Reset();
     nErr = sendCommand(":GEP#", szResp, 21);
     if(nErr)
         return nErr;
@@ -406,6 +421,9 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     nDec = atoi(szDec);
     dRa = (nRa*0.01)/ 60 /60 ;
     dDec = (nDec*0.01)/ 60 /60 ;
+
+    m_dRa = dRa;
+    m_dDec = dDec;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -825,6 +843,7 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
     fprintf(Logfile, "[%s] [CiOptron::getLimits] called. doing nothing for now\n", timestamp);
     fflush(Logfile);
 #endif
+    // cache result and return them as these don't change.
     return nErr;
 }
 
