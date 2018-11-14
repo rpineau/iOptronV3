@@ -915,7 +915,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     } else if (atoi(szResp) == 0) {
         return ERR_LIMITSEXCEEDED;
     } else {
-        m_nStatus == SLEWING;
+        m_nStatus = SLEWING;
         slewToTimer.Reset();  // keep TSX under control
     }
 
