@@ -6,7 +6,8 @@ CiOptron::CiOptron() {
     m_bIsConnected = false;
 
     m_bParked = false;  // probably not good to assume we're parked.  Power could have shut down or we're at zero position or we're parked
-    m_nGPSStatus = 0;  // unread to start (stating broke or missing)
+    m_nGPSStatus = GPS_BROKE_OR_MISSING;  // unread to start (stating broke or missing)
+    m_nTimeSource = TIME_SRC_UNKNOWN;  // unread to start
 
     m_dRa = 0.0;
     m_dDec = 0.0;
@@ -555,6 +556,45 @@ int CiOptron::isGPSGood(bool &bGPSGood)
     fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", timestamp, bGPSGood?"true":"false");
     fflush(Logfile);
 #endif
+    return nErr;
+}
+
+int CiOptron::getGPSStatusString(char *gpsStatus, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
+    getInfoAndSettings();  // this case we want to be accurate
+    switch(m_nGPSStatus){
+        case GPS_BROKE_OR_MISSING:
+            strncpy(gpsStatus, "Broke or Missing", strMaxLen);
+            break;
+        case GPS_WORKING_NOT_RECEIVED_DATA:
+            strncpy(gpsStatus, "Working not Received Data", strMaxLen);
+            break;
+        case GPS_RECEIVING_VALID_DATA:
+            strncpy(gpsStatus, "Working Data Valid", strMaxLen);
+            break;
+    }
+    return nErr;
+}
+
+int CiOptron::getTimeSource(char *timeSourceString, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
+    getInfoAndSettings();  // this case we want to be accurate
+    switch(m_nTimeSource){
+        case TIME_SRC_UNKNOWN:
+            strncpy(timeSourceString, "Uknown or Missing", strMaxLen);
+            break;
+        case RS232_or_ETHERNET:
+            strncpy(timeSourceString, "RS232 or Ethernet", strMaxLen);
+            break;
+        case HAND_CONTROLLER:
+            strncpy(timeSourceString, "Hand Controller", strMaxLen);
+            break;
+        case GPS_CONTROLLER:
+            strncpy(timeSourceString, "GPS Controller", strMaxLen);
+            break;
+    }
     return nErr;
 }
 

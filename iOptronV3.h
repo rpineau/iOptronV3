@@ -49,7 +49,7 @@ enum iOptronGPSStatus {GPS_BROKE_OR_MISSING=0, GPS_WORKING_NOT_RECEIVED_DATA, GP
 
 enum iOptronTrackingRate {TRACKING_SIDEREAL=0, TRACKING_LUNAR, TRACKING_SOLAR, TRACKING_KING, TRACKING_CUSTOM};
 
-enum iOptronTimeSource {RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
+enum iOptronTimeSource {TIME_SRC_UNKNOWN=0, RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
 
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
@@ -89,6 +89,8 @@ public:
     int getRaAndDec(double &dRa, double &dDec);
     int syncTo(double dRa, double dDec);
     int isGPSGood(bool &bGPSGood);
+    int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
+    int getTimeSource(char *timeSourceString, unsigned int strMaxLen);
 
     int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr);
     int getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr);

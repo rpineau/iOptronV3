@@ -235,7 +235,8 @@ int X2Mount::execModalSettingsDialog(void)
 	X2GUIInterface*					ui = uiutil.X2UI();
 	X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
 	bool bPressedOK = false;
-    char szTmpBuf[SERIAL_BUFFER_SIZE];
+    char szGPSStatus[SERIAL_BUFFER_SIZE];
+    char szTimeSource[SERIAL_BUFFER_SIZE];
     double dParkAz, dParkAlt;
     int i;
 
@@ -248,7 +249,8 @@ int X2Mount::execModalSettingsDialog(void)
 		return ERR_POINTER;
 	}
 
-    memset(szTmpBuf,0,SERIAL_BUFFER_SIZE);
+    memset(szGPSStatus,0,SERIAL_BUFFER_SIZE);
+    memset(szTimeSource,0,SERIAL_BUFFER_SIZE);
 
     X2MutexLocker ml(GetMutex());
 
@@ -256,21 +258,26 @@ int X2Mount::execModalSettingsDialog(void)
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
-        dx->setEnabled("pushButtonParked", true);
-        dx->setEnabled("pushButtonGotoZero", true);
-        dx->setEnabled("pushButtonFindZero", true);
-        dx->setEnabled("pushButtonGotoFlats", true);
+        dx->setEnabled("pushButton_2", true);  // parked button
+        dx->setEnabled("pushButton_3", true);  // goto zero button
+        dx->setEnabled("pushButton_4", true);  // find zero button
+        dx->setEnabled("pushButton_5", true); // goto flats position button
         m_iOptronV3.getParkPosition(dParkAz, dParkAlt);
         dx->setPropertyDouble("parkAz", "value", dParkAz);
         dx->setPropertyDouble("parkAlt", "value", dParkAlt);
+
+        m_iOptronV3.getGPSStatusString(szGPSStatus, SERIAL_BUFFER_SIZE);
+        dx->setText("label_kv_1", szGPSStatus);
+        m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
+        dx->setText("label_kv_3", szTimeSource);
     }
     else {
         dx->setEnabled("parkAz", false);
         dx->setEnabled("parkAlt", false);
-        dx->setEnabled("pushButtonParked", false);
-        dx->setEnabled("pushButtonGotoZero", false);
-        dx->setEnabled("pushButtonFindZero", false);
-        dx->setEnabled("pushButtonGotoFlats", false);
+        dx->setEnabled("pushButton_2", false); // parked button
+        dx->setEnabled("pushButton_3", false); // goto zero button
+        dx->setEnabled("pushButton_4", false); // find zero button
+        dx->setEnabled("pushButton_5", false); // goto flats position button
     }
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))
@@ -319,13 +326,13 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     }
 #endif
 
-    if (!strcmp(pszEvent, "on_pushButtonParked_clicked")) { //Set the home polarbutton
+    if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonParked_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_2_clicked (_2 means parked)\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -336,13 +343,13 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting park position : %d", nErr);
             uiex->messageBox("Error",szTmpBuf);
         }
-    } else if (!strcmp(pszEvent, "on_pushButtonGotoZero_clicked")) {
+    } else if (!strcmp(pszEvent, "on_pushButton_3_clicked")) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonGotoZero_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_3_clicked (_3 means goto zero position)\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -352,13 +359,13 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             uiex->messageBox("Error",szTmpBuf);
         }
 
-    } else if (!strcmp(pszEvent, "on_pushButtonFindZero_clicked")) {
+    } else if (!strcmp(pszEvent, "on_pushButton_4_clicked")) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonFindZero_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_4_clicked (_4 means find zero)\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -367,17 +374,17 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error searching mechanical zero/home position : %d", nErr);
             uiex->messageBox("Error",szTmpBuf);
         }
-    } else if (!strcmp(pszEvent, "on_pushButtonGotoFlats_clicked")) {
+    } else if (!strcmp(pszEvent, "on_pushButton_5_clicked")) {
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonGotoFlats_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_5_clicked (_5 means goto flats position)\n", timestamp);
             fflush(LogFile);
         }
 #endif
-        nErr = m_iOptronV3.findZeroPosition();
+        nErr = m_iOptronV3.gotoFlatsPosition();
         if(nErr) {
             snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error going to straight-up position to take flats : %d", nErr);
             uiex->messageBox("Error",szTmpBuf);

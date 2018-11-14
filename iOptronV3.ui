@@ -67,35 +67,6 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QPushButton" name="pushButtonOK">
-      <property name="geometry">
-       <rect>
-        <x>257</x>
-        <y>740</y>
-        <width>81</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>OK</string>
-      </property>
-      <property name="default">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButtonCancel">
-      <property name="geometry">
-       <rect>
-        <x>340</x>
-        <y>740</y>
-        <width>81</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Cancel</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_RTI">
       <property name="geometry">
        <rect>
@@ -141,9 +112,23 @@
         </rect>
        </property>
        <property name="text">
-        <string>GPS Signal Acquired:</string>
+        <string>GPS Signal Status:</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_kv_1">
+       <property name="geometry">
+        <rect>
+         <x>190</x>
+         <y>30</y>
+         <width>185</width>
+         <height>18</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>GPS Status unknown</string>
+       </property>
+      </widget>
+
       <widget class="QLabel" name="label_kv_2">
        <property name="geometry">
         <rect>
@@ -160,55 +145,6 @@
       <widget class="QLabel" name="label_kv_3">
        <property name="geometry">
         <rect>
-         <x>15</x>
-         <y>130</y>
-         <width>140</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>DST (important!):</string>
-       </property>
-      </widget>
-      <widget class="QDateTimeEdit" name="dateTimeEdit">
-       <property name="geometry">
-        <rect>
-         <x>180</x>
-         <y>180</y>
-         <width>194</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_kv_4">
-       <property name="geometry">
-        <rect>
-         <x>15</x>
-         <y>180</y>
-         <width>81</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Date/Time:</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="checkBox">
-       <property name="geometry">
-        <rect>
-         <x>190</x>
-         <y>30</y>
-         <width>185</width>
-         <height>18</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Alignment/slewing accurate</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_kv_5">
-       <property name="geometry">
-        <rect>
          <x>190</x>
          <y>70</y>
          <width>185</width>
@@ -217,6 +153,20 @@
        </property>
        <property name="text">
         <string>*Unknown*</string>
+       </property>
+      </widget>
+
+      <widget class="QLabel" name="label_kv_4">
+       <property name="geometry">
+        <rect>
+         <x>15</x>
+         <y>130</y>
+         <width>140</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>DST (important!):</string>
        </property>
       </widget>
       <widget class="QComboBox" name="comboBox">
@@ -245,6 +195,31 @@
         </property>
        </item>
       </widget>
+
+      <widget class="QLabel" name="label_kv_5">
+       <property name="geometry">
+        <rect>
+         <x>15</x>
+         <y>180</y>
+         <width>81</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Date/Time:</string>
+       </property>
+      </widget>
+      <widget class="QDateTimeEdit" name="dateTimeEdit">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>180</y>
+         <width>194</width>
+         <height>22</height>
+        </rect>
+       </property>
+      </widget>
+
      </widget>
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
@@ -258,22 +233,6 @@
       <property name="title">
        <string>Park Settings</string>
       </property>
-      <widget class="QDoubleSpinBox" name="parkAz">
-       <property name="geometry">
-        <rect>
-         <x>160</x>
-         <y>32</y>
-         <width>80</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <double>360.000000000000000</double>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_pk">
        <property name="geometry">
         <rect>
@@ -290,6 +249,23 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
+      <widget class="QDoubleSpinBox" name="parkAz">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>32</y>
+         <width>80</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <double>360.000000000000000</double>
+       </property>
+      </widget>
+
       <widget class="QLabel" name="label_pk_2">
        <property name="geometry">
         <rect>
@@ -322,7 +298,7 @@
         <double>90.000000000000000</double>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButtonParked">
+      <widget class="QPushButton" name="pushButton_2">
        <property name="geometry">
         <rect>
          <x>96</x>
@@ -351,17 +327,44 @@
       <property name="title">
        <string>Position Settings</string>
       </property>
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>40</y>
+         <width>151</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Goto Zero Position</string>
+       </property>
+      </widget>
       <widget class="QLabel" name="label_z">
        <property name="geometry">
         <rect>
          <x>200</x>
          <y>50</y>
-         <width>170</width>
+         <width>178</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
         <string>iOptron's Zero/Home Position</string>
+       </property>
+      </widget>
+
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>100</y>
+         <width>151</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Seek Zero Position</string>
        </property>
       </widget>
       <widget class="QTextBrowser" name="textBrowser">
@@ -381,30 +384,18 @@
          &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This command will automatically search the mechanical zero position immediately by detecting homing sensors.  Current zero position/home position will be overwritten by this operation.&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;: This command will only affect this mount if it is a CEM120xx or CEM60 series iOptron mount.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButtonGotoZero">
+
+      <widget class="QPushButton" name="pushButton_5">
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>40</y>
+         <y>220</y>
          <width>151</width>
          <height>41</height>
         </rect>
        </property>
        <property name="text">
-        <string>Goto Zero Position</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButtonFindZero">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>100</y>
-         <width>151</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Seek Zero Position</string>
+        <string>Take-Flats Position</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_z_flats">
@@ -420,20 +411,38 @@
         <string>Flats Position (straight up)</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButtonGotoFlats">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>220</y>
-         <width>151</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Take-Flats Position</string>
-       </property>
-      </widget>
      </widget>
+
+        <widget class="QPushButton" name="pushButtonOK">
+            <property name="geometry">
+                <rect>
+                    <x>257</x>
+                    <y>740</y>
+                    <width>81</width>
+                    <height>32</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>OK</string>
+            </property>
+            <property name="default">
+                <bool>true</bool>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="pushButtonCancel">
+            <property name="geometry">
+                <rect>
+                    <x>340</x>
+                    <y>740</y>
+                    <width>81</width>
+                    <height>32</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>Cancel</string>
+            </property>
+        </widget>
+
     </widget>
    </item>
   </layout>
