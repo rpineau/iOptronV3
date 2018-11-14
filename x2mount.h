@@ -45,6 +45,8 @@
 #define DEF_PORT_NAME					"/dev/cu.KeySerial1"
 #endif
 
+enum DIALOGS {MAIN, CONFIRM };
+
 /*!
 \brief The X2Mount example.
 
@@ -215,6 +217,13 @@ private:
 	char m_PortName[MAX_PORT_NAME_SIZE];
 	
 	int m_CurrentRateIndex;
+
+    int m_nCurrentDialog;
+
+    int doConfirm(bool bPressedOK, const char *szText);
+
+    int doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
+    int doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
 
     void portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const;
 

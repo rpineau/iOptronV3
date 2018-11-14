@@ -280,6 +280,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("pushButton_5", false); // goto flats position button
     }
 	//Display the user interface
+    m_nCurrentDialog = MAIN;
 	if ((nErr = ui->exec(bPressedOK)))
 		return nErr;
 	
@@ -298,11 +299,60 @@ int X2Mount::execModalSettingsDialog(void)
 	return nErr;
 }
 
+int X2Mount::doConfirm(bool bPressedOK, const char *szText)
+{
+    int nErr = SB_OK;
+
+    X2ModalUIUtil uiutil(this, m_pTheSkyXForMounts);
+    X2GUIInterface*                    ui = uiutil.X2UI();
+    X2GUIExchangeInterface*            dx = NULL;//Comes after ui is loaded
+
+    bPressedOK = false;
+
+    if (NULL == ui)
+        return ERR_POINTER;
+    nErr = ui->loadUserInterface("iOptronV3Confirm.ui", deviceType(), m_nPrivateMulitInstanceIndex);
+    if (nErr)
+        return nErr;
+
+    dx = uiutil.X2DX();
+    if (NULL == dx)
+        return ERR_POINTER;
+
+    m_nCurrentDialog = CONFIRM;
+
+    dx->setText("messageText", szText);
+    //Display the user interface
+    if ((nErr = ui->exec(bPressedOK)))
+        return nErr;
+
+    m_nCurrentDialog = MAIN;
+
+    return nErr;
+
+}
+
 void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
-    int nErr;
+
+    switch(m_nCurrentDialog) {
+        case MAIN:
+            doMainDialogEvents(uiex, pszEvent);
+            break;
+        case CONFIRM:
+            doConfirmDialogEvents(uiex, pszEvent);
+            break;
+    }
+
+
+}
+
+int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
+{
+    int nErr = SB_OK;
     double dParkAz, dParkAlt;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
+    bool bOk = false;
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -314,7 +364,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
     }
 #endif
     if(!m_bLinked)
-        return ;
+        return ERR_NOLINK ;
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -325,7 +375,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
         fflush(LogFile);
     }
 #endif
-
     if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
@@ -336,12 +385,15 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             fflush(LogFile);
         }
 #endif
-        uiex->propertyDouble("parkAz", "value", dParkAz);
-        uiex->propertyDouble("parkAlt", "value", dParkAlt);
-        nErr = m_iOptronV3.setParkPosition(dParkAz, dParkAlt);
-        if(nErr) {
-            snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting park position : %d", nErr);
-            uiex->messageBox("Error",szTmpBuf);
+        doConfirm(bOk, "Are you sure you want to set the park position ?");
+        if(bOk) {
+            uiex->propertyDouble("parkAz", "value", dParkAz);
+            uiex->propertyDouble("parkAlt", "value", dParkAlt);
+            nErr = m_iOptronV3.setParkPosition(dParkAz, dParkAlt);
+            if(nErr) {
+                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting park position : %d", nErr);
+                uiex->messageBox("Error",szTmpBuf);
+            }
         }
     } else if (!strcmp(pszEvent, "on_pushButton_3_clicked")) {
 #ifdef IOPTRON_X2_DEBUG
@@ -390,7 +442,14 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             uiex->messageBox("Error",szTmpBuf);
         }
     }
-    return;
+    return nErr;
+}
+
+int X2Mount::doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
+{
+    int nErr = SB_OK;
+
+    return nErr;
 }
 
 #pragma mark - LinkInterface
