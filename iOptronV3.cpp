@@ -219,7 +219,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] CiOptron::sendCommand sending : %s\n", timestamp, pszCmd);
+    fprintf(Logfile, "[%s] *** CiOptron::sendCommand sending : %s\n", timestamp, pszCmd);
     fflush(Logfile);
 #endif
 
@@ -235,7 +235,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] CiOptron::sendCommand ***** ERROR READING RESPONSE **** error = %d , response : %s\n", timestamp, nErr, szResp);
+        fprintf(Logfile, "[%s] *** CiOptron::sendCommand ***** ERROR READING RESPONSE **** error = %d , response : %s\n", timestamp, nErr, szResp);
         fflush(Logfile);
 #endif
         return nErr;
@@ -244,7 +244,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] CiOptron::sendCommand response : %s\n", timestamp, szResp);
+    fprintf(Logfile, "[%s] *** CiOptron::sendCommand response : %s\n", timestamp, szResp);
     fflush(Logfile);
 #endif
 
@@ -1156,7 +1156,7 @@ int CiOptron::getRefractionCorrEnabled(bool &bEnabled)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] call result %s \n", timestamp, bEnabled ? "true":"false");
+    fprintf(Logfile, "[%s] [CiOptron::getRefractionCorrEnabled] finished result %s \n", timestamp, bEnabled ? "true":"false");
     fflush(Logfile);
 #endif
     return nErr;

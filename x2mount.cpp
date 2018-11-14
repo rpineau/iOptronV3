@@ -325,7 +325,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_parked_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonParked_clicked\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -342,7 +342,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_gotoZero_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonGotoZero_clicked\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -358,7 +358,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_findZero_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonFindZero_clicked\n", timestamp);
             fflush(LogFile);
         }
 #endif
@@ -373,7 +373,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_gotoFlats_clicked\n", timestamp);
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButtonGotoFlats_clicked\n", timestamp);
             fflush(LogFile);
         }
 #endif
