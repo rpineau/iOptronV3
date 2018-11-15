@@ -118,6 +118,10 @@ public:
     int gotoZeroPosition();
     int gotoFlatsPosition();
     int findZeroPosition();
+    int getUtcOffset(int &nUtcOffsetInMins);
+    int setUtcOffset(int nUtcOffsetInMins);
+    int getDST(bool &bDaylight);
+    int setDST(bool bDaylight);
 
 private:
 

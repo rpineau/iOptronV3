@@ -262,6 +262,8 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
         dx->setEnabled("pushButton_5", true); // goto flats position button
+        dx->setEnabled("lineEdit_utc", true); // utc minutes offset
+        dx->setEnabled("comboBox_dst", true); // daylight or not
         m_iOptronV3.getParkPosition(dParkAz, dParkAlt);
         dx->setPropertyDouble("parkAz", "value", dParkAz);
         dx->setPropertyDouble("parkAlt", "value", dParkAlt);
@@ -270,6 +272,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("label_kv_1", szGPSStatus);
         m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_3", szTimeSource);
+        dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {
         dx->setEnabled("parkAz", false);
@@ -278,6 +281,9 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("pushButton_3", false); // goto zero button
         dx->setEnabled("pushButton_4", false); // find zero button
         dx->setEnabled("pushButton_5", false); // goto flats position button
+        dx->setEnabled("lineEdit_utc", false); // utc minutes offset
+        dx->setEnabled("comboBox_dst", false); // daylight or not
+        dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
     }
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))

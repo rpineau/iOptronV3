@@ -886,6 +886,85 @@ int CiOptron::findZeroPosition() {
 
 }
 
+int CiOptron::getUtcOffset(int &nUtcOffsetInMins)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szTmp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // Get time related info
+    nErr = sendCommand(":GUT#", szResp, 19);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp, 4);
+    nUtcOffsetInMins = atoi(szTmp);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  Result: %i\n", timestamp, nUtcOffsetInMins);
+    fflush(Logfile);
+#endif
+    return nErr;
+}
+
+int CiOptron::setUtcOffset(int nUtcOffsetInMins)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+
+    return nErr;
+}
+
+int CiOptron::getDST(bool &bDaylight)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szTmp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getDST] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // Get time related info
+    nErr = sendCommand(":GUT#", szResp, 19);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp+4, 1);
+    bDaylight = (atoi(szTmp) == 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getDST] finished.  Result: %s\n", timestamp, bDaylight ?'true':'false');
+    fflush(Logfile);
+#endif
+
+    return nErr;
+}
+
+int CiOptron::setDST(bool bDaylight)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+
+    return nErr;
+}
+
 #pragma mark - Limis
 int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 {
