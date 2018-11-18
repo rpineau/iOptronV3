@@ -226,6 +226,11 @@ p, li { white-space: pre-wrap; }
        </property>
        <item>
         <property name="text">
+         <string>Unset/unread from mount</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Daylight (Typically summer)</string>
         </property>
        </item>

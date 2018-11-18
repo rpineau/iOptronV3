@@ -886,11 +886,10 @@ int CiOptron::findZeroPosition() {
 
 }
 
-int CiOptron::getUtcOffset(int &nUtcOffsetInMins)
+int CiOptron::getUtcOffset(char *pszUtcOffsetInMins)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    char szTmp[SERIAL_BUFFER_SIZE];
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -903,24 +902,29 @@ int CiOptron::getUtcOffset(int &nUtcOffsetInMins)
     // Get time related info
     nErr = sendCommand(":GUT#", szResp, 19);
 
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp, szResp, 4);
-    nUtcOffsetInMins = atoi(szTmp);
+    memset(pszUtcOffsetInMins,0, SERIAL_BUFFER_SIZE);
+    memcpy(pszUtcOffsetInMins, szResp, 4);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  Result: %i\n", timestamp, nUtcOffsetInMins);
+    fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  Result: %s\n", timestamp, pszUtcOffsetInMins);
     fflush(Logfile);
 #endif
     return nErr;
 }
 
-int CiOptron::setUtcOffset(int nUtcOffsetInMins)
+int CiOptron::setUtcOffset(char *pszUtcOffsetInMins)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+
+    // :SGsMMM#
+    // This command sets the minute offset from UTC (The Daylight-Saving Time will
+    // not be take account into this value). Valid data range is [-720, +780].
+    // Note: the resolution is 1 minute.
+
 
     return nErr;
 }
@@ -942,6 +946,14 @@ int CiOptron::getDST(bool &bDaylight)
     // Get time related info
     nErr = sendCommand(":GUT#", szResp, 19);
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getDST] send of :GUT# finished.  Result: %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+4, 1);
     bDaylight = (atoi(szTmp) == 1);
@@ -950,7 +962,7 @@ int CiOptron::getDST(bool &bDaylight)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getDST] finished.  Result: %s\n", timestamp, bDaylight ?'true':'false');
+    fprintf(Logfile, "[%s] [CiOptron::getDST] finished.  Result: %s with error code: %i\n", timestamp, bDaylight ?"true":"false", nErr);
     fflush(Logfile);
 #endif
 

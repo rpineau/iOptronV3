@@ -237,6 +237,9 @@ int X2Mount::execModalSettingsDialog(void)
 	bool bPressedOK = false;
     char szGPSStatus[SERIAL_BUFFER_SIZE];
     char szTimeSource[SERIAL_BUFFER_SIZE];
+    char szUtcOffsetInMins[SERIAL_BUFFER_SIZE];
+    bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
+
     double dParkAz, dParkAlt;
     int i;
 
@@ -272,6 +275,15 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("label_kv_1", szGPSStatus);
         m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_3", szTimeSource);
+        m_iOptronV3.getUtcOffset(szUtcOffsetInMins);
+        dx->setText("lineEdit_utc", szUtcOffsetInMins);
+        nErr = m_iOptronV3.getDST(bDaylight);
+        if (nErr) {
+            dx->setText("comboBox_dst", "Unset/unread from mount");  // not working
+        } else {
+            dx->setText("comboBox_dst", bDaylight?"Daylight (Typically summer)":"Standard (Typically winter)");
+        }
+
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {
