@@ -279,9 +279,9 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("lineEdit_utc", szUtcOffsetInMins);
         nErr = m_iOptronV3.getDST(bDaylight);
         if (nErr) {
-            dx->setText("comboBox_dst", "Unset/unread from mount");  // not working
+            dx->setCurrentIndex("comboBox_dst", 0);
         } else {
-            dx->setText("comboBox_dst", bDaylight?"Daylight (Typically summer)":"Standard (Typically winter)");
+            dx->setCurrentIndex("comboBox_dst", bDaylight?1:2);
         }
 
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
