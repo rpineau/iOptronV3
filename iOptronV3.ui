@@ -430,7 +430,7 @@ p, li { white-space: pre-wrap; }
         <x>257</x>
         <y>672</y>
         <width>81</width>
-        <height>32</height>
+        <height>24</height>
        </rect>
       </property>
       <property name="text">
@@ -446,7 +446,7 @@ p, li { white-space: pre-wrap; }
         <x>340</x>
         <y>672</y>
         <width>81</width>
-        <height>32</height>
+        <height>24</height>
        </rect>
       </property>
       <property name="text">
