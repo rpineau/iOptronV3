@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>461</width>
-    <height>800</height>
+    <width>460</width>
+    <height>738</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,8 +18,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>461</width>
-    <height>800</height>
+    <width>460</width>
+    <height>738</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -70,33 +70,23 @@
      <widget class="QLabel" name="label_RTI">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>128</x>
         <y>2</y>
-        <width>161</width>
+        <width>200</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>© RTI-Zone.org, 2018</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>0</y>
-        <width>280</width>
-        <height>148</height>
-       </rect>
+       <string>Erix Roubal &amp; RTI-Zone, 2018</string>
       </property>
      </widget>
      <widget class="QGroupBox" name="GroupBox">
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>40</y>
-        <width>400</width>
-        <height>210</height>
+        <y>32</y>
+        <width>416</width>
+        <height>232</height>
        </rect>
       </property>
       <property name="title">
@@ -107,120 +97,128 @@
         <rect>
          <x>15</x>
          <y>30</y>
-         <width>140</width>
-         <height>16</height>
+         <width>160</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
-        <string>GPS Signal Status:</string>
+        <string>GPS Signal Status :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QLabel" name="label_kv_1">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>192</x>
          <y>30</y>
-         <width>185</width>
-         <height>18</height>
+         <width>200</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
         <string>GPS Status unknown</string>
        </property>
       </widget>
-
       <widget class="QLabel" name="label_kv_2">
        <property name="geometry">
         <rect>
          <x>15</x>
          <y>55</y>
-         <width>150</width>
-         <height>16</height>
+         <width>160</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
-        <string>Where Time Came from:</string>
+        <string>Where Time Came from :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QLabel" name="label_kv_3">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>192</x>
          <y>55</y>
-         <width>185</width>
-         <height>20</height>
+         <width>208</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
         <string>*Unknown*</string>
        </property>
       </widget>
-
       <widget class="QLabel" name="label_kv_4">
        <property name="geometry">
         <rect>
-         <x>15</x>
+         <x>16</x>
          <y>80</y>
-         <width>170</width>
-         <height>16</height>
+         <width>160</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
-        <string>UTC Offset (minutes):</string>
+        <string>UTC Offset (minutes) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEdit_utc">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>192</x>
          <y>80</y>
-         <width>70</width>
-         <height>20</height>
+         <width>80</width>
+         <height>24</height>
         </rect>
        </property>
       </widget>
-
       <widget class="QTextBrowser" name="textBrowser">
        <property name="geometry">
         <rect>
-         <x>280</x>
-         <y>78</y>
-         <width>115</width>
-         <height>75</height>
+         <x>192</x>
+         <y>112</y>
+         <width>208</width>
+         <height>64</height>
         </rect>
        </property>
        <property name="html">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-         &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-         p, li { white-space: pre-wrap; }
-         &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-         &lt;span style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Important! The minute offset from UTC (time zone). Note: The Daylight- Saving Time will not be take account into this value.&lt;/span&gt;&lt;/span&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt;&quot;&gt;Important! The minute offset from UTC (time zone). Note: The Daylight- Saving Time will not be take account into this value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
-
       <widget class="QLabel" name="label_kv_6">
        <property name="geometry">
         <rect>
          <x>15</x>
-         <y>170</y>
-         <width>140</width>
-         <height>16</height>
+         <y>192</y>
+         <width>160</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
-        <string>DST (important!):</string>
+        <string>DST (important!) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QComboBox" name="comboBox_dst">
        <property name="geometry">
         <rect>
-         <x>190</x>
-         <y>170</y>
-         <width>181</width>
-         <height>22</height>
+         <x>184</x>
+         <y>192</y>
+         <width>216</width>
+         <height>24</height>
         </rect>
        </property>
-       <property name="combo_daylight" stdset="1">
+       <property name="combo_daylight" stdset="0">
         <string/>
        </property>
        <property name="combo_standard" stdset="0">
@@ -237,14 +235,13 @@
         </property>
        </item>
       </widget>
-
      </widget>
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>280</y>
-        <width>257</width>
+        <y>272</y>
+        <width>416</width>
         <height>137</height>
        </rect>
       </property>
@@ -256,7 +253,7 @@
         <rect>
          <x>8</x>
          <y>32</y>
-         <width>144</width>
+         <width>176</width>
          <height>24</height>
         </rect>
        </property>
@@ -270,7 +267,7 @@
       <widget class="QDoubleSpinBox" name="parkAz">
        <property name="geometry">
         <rect>
-         <x>160</x>
+         <x>192</x>
          <y>32</y>
          <width>80</width>
          <height>24</height>
@@ -283,13 +280,12 @@
         <double>360.000000000000000</double>
        </property>
       </widget>
-
       <widget class="QLabel" name="label_pk_2">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>64</y>
-         <width>152</width>
+         <width>184</width>
          <height>24</height>
         </rect>
        </property>
@@ -303,7 +299,7 @@
       <widget class="QDoubleSpinBox" name="parkAlt">
        <property name="geometry">
         <rect>
-         <x>160</x>
+         <x>192</x>
          <y>64</y>
          <width>80</width>
          <height>24</height>
@@ -319,7 +315,7 @@
       <widget class="QPushButton" name="pushButton_2">
        <property name="geometry">
         <rect>
-         <x>96</x>
+         <x>48</x>
          <y>96</y>
          <width>144</width>
          <height>24</height>
@@ -334,9 +330,9 @@
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>440</y>
-        <width>400</width>
-        <height>280</height>
+        <y>416</y>
+        <width>416</width>
+        <height>248</height>
        </rect>
       </property>
       <property name="windowTitle">
@@ -349,9 +345,9 @@
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>40</y>
+         <y>32</y>
          <width>151</width>
-         <height>41</height>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
@@ -361,24 +357,23 @@
       <widget class="QLabel" name="label_z">
        <property name="geometry">
         <rect>
-         <x>200</x>
-         <y>50</y>
+         <x>192</x>
+         <y>32</y>
          <width>178</width>
-         <height>16</height>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
         <string>iOptron's Zero/Home Position</string>
        </property>
       </widget>
-
       <widget class="QPushButton" name="pushButton_4">
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>100</y>
+         <y>64</y>
          <width>151</width>
-         <height>41</height>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
@@ -388,28 +383,27 @@
       <widget class="QTextBrowser" name="textBrowser2">
        <property name="geometry">
         <rect>
-         <x>200</x>
-         <y>100</y>
-         <width>181</width>
-         <height>100</height>
+         <x>192</x>
+         <y>72</y>
+         <width>208</width>
+         <height>120</height>
         </rect>
        </property>
        <property name="html">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-         &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-         p, li { white-space: pre-wrap; }
-         &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-         &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This command will automatically search the mechanical zero position immediately by detecting homing sensors.  Current zero position/home position will be overwritten by this operation.&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;: This command will only affect this mount if it is a CEM120xx or CEM60 series iOptron mount.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt;&quot;&gt;This command will automatically search the mechanical zero position immediately by detecting homing sensors.  Current zero position/home position will be overwritten by this operation.&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt; font-weight:600;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:10pt;&quot;&gt;: This command will only affect this mount if it is a CEM120xx or CEM60 series iOptron mount.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
-
       <widget class="QPushButton" name="pushButton_5">
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>220</y>
+         <y>200</y>
          <width>151</width>
-         <height>41</height>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
@@ -419,10 +413,10 @@
       <widget class="QLabel" name="label_z_flats">
        <property name="geometry">
         <rect>
-         <x>200</x>
-         <y>236</y>
-         <width>170</width>
-         <height>16</height>
+         <x>192</x>
+         <y>200</y>
+         <width>184</width>
+         <height>24</height>
         </rect>
        </property>
        <property name="text">
@@ -430,37 +424,35 @@
        </property>
       </widget>
      </widget>
-
-        <widget class="QPushButton" name="pushButtonOK">
-            <property name="geometry">
-                <rect>
-                    <x>257</x>
-                    <y>740</y>
-                    <width>81</width>
-                    <height>32</height>
-                </rect>
-            </property>
-            <property name="text">
-                <string>OK</string>
-            </property>
-            <property name="default">
-                <bool>true</bool>
-            </property>
-        </widget>
-        <widget class="QPushButton" name="pushButtonCancel">
-            <property name="geometry">
-                <rect>
-                    <x>340</x>
-                    <y>740</y>
-                    <width>81</width>
-                    <height>32</height>
-                </rect>
-            </property>
-            <property name="text">
-                <string>Cancel</string>
-            </property>
-        </widget>
-
+     <widget class="QPushButton" name="pushButtonOK">
+      <property name="geometry">
+       <rect>
+        <x>257</x>
+        <y>672</y>
+        <width>81</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>OK</string>
+      </property>
+      <property name="default">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButtonCancel">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>672</y>
+        <width>81</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+     </widget>
     </widget>
    </item>
   </layout>
