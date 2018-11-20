@@ -243,9 +243,7 @@ int X2Mount::execModalSettingsDialog(void)
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
     bool bAtZero = false;
     bool bAtParked = false;
-
     double dParkAz, dParkAlt;
-    int i;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -338,10 +336,10 @@ int X2Mount::execModalSettingsDialog(void)
             // changed utc offset
             if (atoi(szUtcOffsetReadInMins) > 780 || atoi(szUtcOffsetReadInMins) < -720) {
                 // out of range,..
-                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Valid values for UTC offset are -720 to +780", nErr);
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Valid values for UTC offset are -720 to +780");
                 dx->messageBox("Error", szTmpBuf);
             } else if (szUtcOffsetReadInMins[0] != '+' && szUtcOffsetReadInMins[0] != '-') {
-                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "You must prefix your offset with a + or - sign", nErr);
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "You must prefix your offset with a + or - sign");
                 dx->messageBox("Error", szTmpBuf);
             } else {
                 m_iOptronV3.setUtcOffset(szUtcOffsetReadInMins);

@@ -284,7 +284,7 @@ int CiOptron::readResponse(char *szRespBuffer, int nBytesToRead)
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] CiOptron::readResponse number of bytes read not what expected.  Number of bytes read: %i.  Number expected: %i\n", timestamp, ulBytesActuallyRead, nBytesToRead);
+        fprintf(Logfile, "[%s] CiOptron::readResponse number of bytes read not what expected.  Number of bytes read: %lu.  Number expected: %i\n", timestamp, ulBytesActuallyRead, nBytesToRead);
         fflush(Logfile);
 #endif
 
@@ -304,7 +304,6 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    int nModel;
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
@@ -538,7 +537,6 @@ int CiOptron::syncTo(double dRa, double dDec)
 int CiOptron::isGPSGood(bool &bGPSGood)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
@@ -692,7 +690,6 @@ int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrac
 int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, double &dTrackDecArcSecPerSec)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
@@ -1141,7 +1138,6 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 int CiOptron::isSlewToComplete(bool &bComplete)
 {
     int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
