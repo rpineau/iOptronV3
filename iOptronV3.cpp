@@ -806,6 +806,18 @@ int CiOptron::gotoZeroPosition() {
 
 }
 
+int CiOptron::getAtZeroPosition(bool &bAtZero) {
+    // special call which is used by UI.. and we've assumed getInfoAndSettings() already called for other UI elements
+    bAtZero = m_nStatus == HOMED;
+    return IOPTRON_OK;
+}
+
+int CiOptron::getAtParkedPositionPassive(bool &bAtParked) {
+    // special call which is used by UI.. and we've assumed getInfoAndSettings() already called for other UI elements
+    bAtParked = m_nStatus == PARKED;
+    return IOPTRON_OK;
+}
+
 int CiOptron::gotoFlatsPosition() {
     // special convience function to take flats
 
@@ -919,12 +931,40 @@ int CiOptron::setUtcOffset(char *pszUtcOffsetInMins)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    char szCmd[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] called \n", timestamp);
+    fflush(Logfile);
+#endif
 
     // :SGsMMM#
     // This command sets the minute offset from UTC (The Daylight-Saving Time will
     // not be take account into this value). Valid data range is [-720, +780].
     // Note: the resolution is 1 minute.
 
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SG%s#", pszUtcOffsetInMins);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] buffer to send to mount %s\n", timestamp, szCmd);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(szCmd, szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] done\n", timestamp);
+    fflush(Logfile);
+#endif
 
     return nErr;
 }
@@ -973,6 +1013,41 @@ int CiOptron::setDST(bool bDaylight)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    char szCmd[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setDST] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    //  Command: “:SDS0#” or “:SDS1#”
+    //  Response: “1”
+    //  These commands set the status of Daylight Saving Time.
+    //  “:SDS1#” means Daylight Saving Time has been observed,
+    //  “:SDS0#” means Daylight Saving Time has not been observed.
+
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SDS%.1d#", bDaylight?1:0);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setDST] buffer to send to mount %s\n", timestamp, szCmd);
+    fflush(Logfile);
+#endif
+
+    nErr = sendCommand(szCmd, szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::setDST] done\n", timestamp);
+    fflush(Logfile);
+#endif
 
     return nErr;
 }

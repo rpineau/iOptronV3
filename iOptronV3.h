@@ -116,6 +116,8 @@ public:
     int Abort();
 
     int gotoZeroPosition();
+    int getAtZeroPosition(bool &bAtZero);
+    int getAtParkedPositionPassive(bool &bAtParked);
     int gotoFlatsPosition();
     int findZeroPosition();
     int getUtcOffset(char *pszUtcOffsetInMins);

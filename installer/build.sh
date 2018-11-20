@@ -2,6 +2,7 @@
 
 mkdir -p ROOT/tmp/iOptronV3_X2/
 cp "../iOptronV3.ui" ROOT/tmp/iOptronV3_X2/
+cp "../iOptronV3Conf.ui" ROOT/tmp/iOptronV3_X2/
 cp "../mountlist iOptronV3.txt" ROOT/tmp/iOptronV3_X2/
 cp "../build/Release/libiOptronV3.dylib" ROOT/tmp/iOptronV3_X2/
 

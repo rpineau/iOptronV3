@@ -235,10 +235,14 @@ int X2Mount::execModalSettingsDialog(void)
 	X2GUIInterface*					ui = uiutil.X2UI();
 	X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
 	bool bPressedOK = false;
+	char szTmpBuf[SERIAL_BUFFER_SIZE];
     char szGPSStatus[SERIAL_BUFFER_SIZE];
     char szTimeSource[SERIAL_BUFFER_SIZE];
     char szUtcOffsetInMins[SERIAL_BUFFER_SIZE];
+    char szUtcOffsetReadInMins[SERIAL_BUFFER_SIZE];
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
+    bool bAtZero = false;
+    bool bAtParked = false;
 
     double dParkAz, dParkAlt;
     int i;
@@ -283,7 +287,10 @@ int X2Mount::execModalSettingsDialog(void)
         } else {
             dx->setCurrentIndex("comboBox_dst", bDaylight?1:2);
         }
-
+        m_iOptronV3.getAtZeroPosition(bAtZero);  // must be after other checks since position status already set by those calls
+        dx->setChecked("checkBox_z", bAtZero ? 1:0);
+        m_iOptronV3.getAtParkedPositionPassive(bAtParked);
+        dx->setChecked("checkBox_p", bAtParked ? 1:0);
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {
@@ -297,6 +304,10 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("comboBox_dst", false); // daylight or not
         dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
     }
+
+    dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
+    dx->setEnabled("checkBox_p", false);  // checkbox indicating if you are at park position.. output only
+
 	//Display the user interface
     m_nCurrentDialog = MAIN;
 	if ((nErr = ui->exec(bPressedOK)))
@@ -309,15 +320,56 @@ int X2Mount::execModalSettingsDialog(void)
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK??: what do I do now?\n", timestamp);
+            fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: do the needful and check if stuff changed\n", timestamp);
             fflush(LogFile);
         }
 #endif
+        dx->text("lineEdit_utc", szUtcOffsetReadInMins, SERIAL_BUFFER_SIZE);
+        if (strcmp(szUtcOffsetReadInMins, szUtcOffsetInMins) != 0) {
+#ifdef IOPTRON_X2_DEBUG
+            if (LogFile) {
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: utc value changed value is %s.  first character %c\n", timestamp, szUtcOffsetReadInMins, szUtcOffsetReadInMins[0]);
+                fflush(LogFile);
+            }
+#endif
+            // changed utc offset
+            if (atoi(szUtcOffsetReadInMins) > 780 || atoi(szUtcOffsetReadInMins) < -720) {
+                // out of range,..
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Valid values for UTC offset are -720 to +780", nErr);
+                dx->messageBox("Error", szTmpBuf);
+            } else if (szUtcOffsetReadInMins[0] != '+' && szUtcOffsetReadInMins[0] != '-') {
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "You must prefix your offset with a + or - sign", nErr);
+                dx->messageBox("Error", szTmpBuf);
+            } else {
+                m_iOptronV3.setUtcOffset(szUtcOffsetReadInMins);
+            }
+        }
+        if (dx->currentIndex("comboBox_dst") != 0) {
+#ifdef IOPTRON_X2_DEBUG
+            if (LogFile) {
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: dst value set.  Value read is %i\n", timestamp, dx->currentIndex("comboBox_dst"));
+                fflush(LogFile);
+            }
+#endif
+            if (dx->currentIndex("comboBox_dst") == 1 && !bDaylight) {
+                // change to daylight
+                m_iOptronV3.setDST(true);
+            } else if (dx->currentIndex("comboBox_dst") == 2 && bDaylight) {
+                // change to standard
+                m_iOptronV3.setDST(false);
+            }
+        }
 	}
 	return nErr;
 }
 
-int X2Mount::doConfirm(bool bPressedOK, const char *szText)
+int X2Mount::doConfirm(bool &bPressedOK, const char *szText)
 {
     int nErr = SB_OK;
 
@@ -327,11 +379,32 @@ int X2Mount::doConfirm(bool bPressedOK, const char *szText)
 
     bPressedOK = false;
 
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] doConfirm called: X2GUIInterface is %s.  \n", timestamp, ui==NULL?"NULL":"*good*");
+        fflush(LogFile);
+    }
+#endif
+
     if (NULL == ui)
         return ERR_POINTER;
-    nErr = ui->loadUserInterface("iOptronV3Confirm.ui", deviceType(), m_nPrivateMulitInstanceIndex);
-    if (nErr)
+    nErr = ui->loadUserInterface("iOptronV3Conf.ui", deviceType(), m_nPrivateMulitInstanceIndex);
+
+    if (nErr) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] doConfirm error when loading user interface: %i.  \n", timestamp, nErr);
+            fflush(LogFile);
+        }
+#endif
         return nErr;
+    }
 
     dx = uiutil.X2DX();
     if (NULL == dx)
@@ -341,8 +414,29 @@ int X2Mount::doConfirm(bool bPressedOK, const char *szText)
 
     dx->setText("messageText", szText);
     //Display the user interface
-    if ((nErr = ui->exec(bPressedOK)))
+    nErr = ui->exec(bPressedOK);
+    if (nErr) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] doConfirm dialog ended.  Error when exec-ing user interface: %i.  \n", timestamp, nErr);
+            fflush(LogFile);
+        }
+#endif
         return nErr;
+    }
+
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] doConfirm dialog ended successfully.  value of bPressedOK: %s.  \n", timestamp, bPressedOK?"true":"false");
+        fflush(LogFile);
+    }
+#endif
 
     m_nCurrentDialog = MAIN;
 
@@ -423,10 +517,13 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             fflush(LogFile);
         }
 #endif
-        nErr = m_iOptronV3.gotoZeroPosition();
-        if(nErr) {
-            snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error going to zero/home position : %d", nErr);
-            uiex->messageBox("Error",szTmpBuf);
+        doConfirm(bOk, "Are you sure you want to go to zero position ?");
+        if(bOk) {
+            nErr = m_iOptronV3.gotoZeroPosition();
+            if (nErr) {
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error going to zero/home position : %d", nErr);
+                uiex->messageBox("Error", szTmpBuf);
+            }
         }
 
     } else if (!strcmp(pszEvent, "on_pushButton_4_clicked")) {
@@ -439,10 +536,13 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             fflush(LogFile);
         }
 #endif
-        nErr = m_iOptronV3.findZeroPosition();
-        if(nErr) {
-            snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error searching mechanical zero/home position : %d", nErr);
-            uiex->messageBox("Error",szTmpBuf);
+        doConfirm(bOk, "Are you sure you want to search for mechanical zero position ?");
+        if(bOk) {
+            nErr = m_iOptronV3.findZeroPosition();
+            if (nErr) {
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error searching mechanical zero/home position : %d", nErr);
+                uiex->messageBox("Error", szTmpBuf);
+            }
         }
     } else if (!strcmp(pszEvent, "on_pushButton_5_clicked")) {
 #ifdef IOPTRON_X2_DEBUG
@@ -454,10 +554,13 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             fflush(LogFile);
         }
 #endif
-        nErr = m_iOptronV3.gotoFlatsPosition();
-        if(nErr) {
-            snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error going to straight-up position to take flats : %d", nErr);
-            uiex->messageBox("Error",szTmpBuf);
+        doConfirm(bOk, "Are you sure you want to move the mount to point straight up and take flats ?");
+        if(bOk) {
+            nErr = m_iOptronV3.gotoFlatsPosition();
+            if (nErr) {
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error going to straight-up position to take flats : %d", nErr);
+                uiex->messageBox("Error", szTmpBuf);
+            }
         }
     }
     return nErr;

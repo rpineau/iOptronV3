@@ -220,7 +220,7 @@ private:
 
     int m_nCurrentDialog;
 
-    int doConfirm(bool bPressedOK, const char *szText);
+    int doConfirm(bool &bPressedOK, const char *szText);
 
     int doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
     int doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
