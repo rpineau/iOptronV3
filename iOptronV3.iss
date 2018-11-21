@@ -45,6 +45,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "mountlist iOptronV3.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
 Source: "libiOptronV3\Release\libiOptronV3.dll"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
 Source: "iOptronV3.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+Source: "iOptronV3Conf.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; msgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO)
 
