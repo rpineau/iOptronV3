@@ -77,7 +77,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Erix Roubal &amp; RTI-Zone, 2018</string>
+       <string>Eric Roubal &amp; RTI-Zone, 2018</string>
       </property>
      </widget>
      <widget class="QGroupBox" name="GroupBox">

@@ -1184,11 +1184,6 @@ int CiOptron::parkMount()
     char szResp[SERIAL_BUFFER_SIZE];
     int nParkResult;
 
-    // set park position ?
-    // RP : we probably need to set the mount park position from the settings dialog. I'll look into it.
-    //      from the doc : "This command parks to the most recently defined parking position" ... so we need to define it
-    //      if it's not already defined (and saved) in the mount
-    // or goto ?    // RP : Goto and Park should be different.
     // ER: the scope comes with park already set
     nErr = sendCommand(":MP1#", szResp, 1);  // merely ask to park
     if(nErr)
@@ -1215,7 +1210,7 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::markParkPosition] setting  Park Az to : %d\n", timestamp, int(dAzArcSec));
+    fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Az to : %d\n", timestamp, int(dAzArcSec));
     fflush(Logfile);
 #endif
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAzArcSec));
@@ -1230,10 +1225,10 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::markParkPosition] setting  Park Alt to : %d\n", timestamp, int(dAltArcSec));
+    fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Alt to : %d\n", timestamp, int(dAltArcSec));
     fflush(Logfile);
 #endif
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPH%09d#", int(dAltArcSec));
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPH%08d#", int(dAltArcSec));
     nErr = sendCommand(szCmd, szResp, 1);
     if(nErr)
         return nErr;
@@ -1249,17 +1244,45 @@ int CiOptron::getParkPosition(double &dAz, double &dAlt)
     char szParkAz[SERIAL_BUFFER_SIZE], szParkAlt[SERIAL_BUFFER_SIZE];
     int nAzArcSec, nAltArcSec;
 
-    nErr = sendCommand(":GPC#", szResp, 18);  // merely ask to unpark
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getParkPosition] called\n", timestamp);
+    fflush(Logfile);
+#endif
+
+    // Response: “TTTTTTTTTTTTTTTTT#”
+    nErr = sendCommand(":GPC#", szResp, 18);
+
     if(nErr)
         return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getParkPosition] :GPC# command response %s\n", timestamp, szResp);
+    fflush(Logfile);
+#endif
+
     memset(szParkAz, 0, SERIAL_BUFFER_SIZE);
     memset(szParkAlt, 0, SERIAL_BUFFER_SIZE);
-    memcpy(szParkAz, szResp, 8);
-    memcpy(szParkAlt, szResp+8, 9);
+
+    memcpy(szParkAlt, szResp, 8); // The first 8 digits indicate the altitude of parking position. Valid data range is [0, 32,400,000]. Note: The resolution is 0.01 arc-second.
+    memcpy(szParkAz, szResp+8, 9); // The last 9 digits indicate the azimuth of parking position. Valid data range is [0, 129,600,000]. Note: The resolution is 0.01 arc-second.
     nAzArcSec = atoi(szParkAz);
     nAltArcSec = atoi(szParkAlt);
     dAz = (nAzArcSec*0.01)/ 60 /60 ;
     dAlt = (nAltArcSec*0.01)/ 60 /60 ;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::getParkPosition] azmuth: %f and alt: %f\n", timestamp, dAz, dAlt);
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
