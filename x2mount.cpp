@@ -240,6 +240,8 @@ int X2Mount::execModalSettingsDialog(void)
     char szTimeSource[SERIAL_BUFFER_SIZE];
     char szUtcOffsetInMins[SERIAL_BUFFER_SIZE];
     char szUtcOffsetReadInMins[SERIAL_BUFFER_SIZE];
+    char szSystemStatus[SERIAL_BUFFER_SIZE];
+    char szTrackingRate[SERIAL_BUFFER_SIZE];
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
     bool bAtZero = false;
     bool bAtParked = false;
@@ -289,6 +291,11 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setChecked("checkBox_z", bAtZero ? 1:0);
         m_iOptronV3.getAtParkedPositionPassive(bAtParked);
         dx->setChecked("checkBox_p", bAtParked ? 1:0);
+        m_iOptronV3.getSystemStatusPassive(szSystemStatus, SERIAL_BUFFER_SIZE);
+        dx->setText("label_actual_sys_stat", szSystemStatus);
+        m_iOptronV3.getTrackingStatusPassive(szTrackingRate, SERIAL_BUFFER_SIZE);
+        dx->setText("label_actual_track_rate", szTrackingRate);
+
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {

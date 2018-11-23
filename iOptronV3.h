@@ -91,11 +91,13 @@ public:
     int isGPSGood(bool &bGPSGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
     int getTimeSource(char *timeSourceString, unsigned int strMaxLen);
+    int getSystemStatusPassive(char *strSystemStatus, unsigned int strMaxLen);
 
     int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr);
     int getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr);
     int setSiderealTrackingOn();
     int setTrackingOff();
+    int getTrackingStatusPassive(char *strTrackingStatus, unsigned int strMaxLen);
 
     int startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees);
     int isSlewToComplete(bool &bComplete);

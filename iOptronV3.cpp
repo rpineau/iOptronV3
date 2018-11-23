@@ -110,7 +110,6 @@ int CiOptron::getNbSlewRates()
     return IOPTRON_NB_SLEW_SPEEDS;
 }
 
-#pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMaxSize)
 {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -129,7 +128,6 @@ int CiOptron::getRateName(int nZeroBasedIndex, char *pszOut, unsigned int nOutMa
     return IOPTRON_OK;
 }
 
-#pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate) // todo: not trivial how to slew in V3
 {
     int nErr = IOPTRON_OK;
@@ -178,7 +176,6 @@ int CiOptron::startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned in
     return nErr;
 }
 
-#pragma mark - Used by OpenLoopMoveInterface
 int CiOptron::stopOpenLoopMove()
 {
     int nErr = IOPTRON_OK;
@@ -533,69 +530,6 @@ int CiOptron::syncTo(double dRa, double dDec)
      return nErr;
 }
 
-
-int CiOptron::isGPSGood(bool &bGPSGood)
-{
-    int nErr = IOPTRON_OK;
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] called \n", timestamp);
-    fflush(Logfile);
-#endif
-
-    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", timestamp, bGPSGood?"true":"false");
-    fflush(Logfile);
-#endif
-    return nErr;
-}
-
-int CiOptron::getGPSStatusString(char *gpsStatus, unsigned int strMaxLen)
-{
-    int nErr = IOPTRON_OK;
-    getInfoAndSettings();  // this case we want to be accurate
-    switch(m_nGPSStatus){
-        case GPS_BROKE_OR_MISSING:
-            strncpy(gpsStatus, "Broke or Missing", strMaxLen);
-            break;
-        case GPS_WORKING_NOT_RECEIVED_DATA:
-            strncpy(gpsStatus, "Working not Received Data", strMaxLen);
-            break;
-        case GPS_RECEIVING_VALID_DATA:
-            strncpy(gpsStatus, "Working Data Valid", strMaxLen);
-            break;
-    }
-    return nErr;
-}
-
-int CiOptron::getTimeSource(char *timeSourceString, unsigned int strMaxLen)
-{
-    int nErr = IOPTRON_OK;
-    getInfoAndSettings();  // this case we want to be accurate
-    switch(m_nTimeSource){
-        case TIME_SRC_UNKNOWN:
-            strncpy(timeSourceString, "Uknown or Missing", strMaxLen);
-            break;
-        case RS232_or_ETHERNET:
-            strncpy(timeSourceString, "RS232 or Ethernet", strMaxLen);
-            break;
-        case HAND_CONTROLLER:
-            strncpy(timeSourceString, "Hand Controller", strMaxLen);
-            break;
-        case GPS_CONTROLLER:
-            strncpy(timeSourceString, "GPS Controller", strMaxLen);
-            break;
-    }
-    return nErr;
-}
-
 #pragma mark - tracking rates
 int CiOptron::setSiderealTrackingOn() {
     // special implementation avoiding manually setting the tracking rate
@@ -631,7 +565,6 @@ int CiOptron::setSiderealTrackingOn() {
 
 }
 
-#pragma mark - tracking rates
 int CiOptron::setTrackingOff() {
     // special implementation avoiding manually setting the tracking rate
 
@@ -660,7 +593,6 @@ int CiOptron::setTrackingOff() {
 
 }
 
-#pragma mark - tracking rates
 int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr)
 {
     int nErr = IOPTRON_OK;
@@ -1086,8 +1018,16 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 
     nErr = isGPSGood(bGPSGood);
 
-    if (!bGPSGood)
+    if (!bGPSGood) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f .. ABORTING due to GPS signal not being good\n", timestamp, dRaInDecimalHours, dDecInDecimalDegrees);
+        fflush(Logfile);
+#endif
         return ERR_ABORTEDPROCESS;
+    }
 
     dRaArcSec = (dRaInDecimalHours * 60 * 60) / 0.01;  // actually hundreths of arc sec
     // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000]. Note: The resolution is 0.01 arc-second.
@@ -1171,6 +1111,29 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     fflush(Logfile);
 #endif
 
+    return nErr;
+}
+
+int CiOptron::isGPSGood(bool &bGPSGood)
+{
+    int nErr = IOPTRON_OK;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] called \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", timestamp, bGPSGood?"true":"false");
+    fflush(Logfile);
+#endif
     return nErr;
 }
 
