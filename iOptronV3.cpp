@@ -704,6 +704,7 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     return nErr;
 }
 
+#pragma mark - UI controlls
 int CiOptron::gotoZeroPosition() {
     // special implementation for CEM120xx and CEM60xx only
 
@@ -981,7 +982,105 @@ int CiOptron::setDST(bool bDaylight)
     return nErr;
 }
 
-#pragma mark - Limis
+
+int CiOptron::getGPSStatusString(char *gpsStatus, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
+    getInfoAndSettings();  // this case we want to be accurate
+    switch(m_nGPSStatus){
+        case GPS_BROKE_OR_MISSING:
+            strncpy(gpsStatus, "Broke or Missing", strMaxLen);
+            break;
+        case GPS_WORKING_NOT_RECEIVED_DATA:
+            strncpy(gpsStatus, "Working not Received Data", strMaxLen);
+            break;
+        case GPS_RECEIVING_VALID_DATA:
+            strncpy(gpsStatus, "Working Data Valid", strMaxLen);
+            break;
+    }
+    return nErr;
+}
+
+int CiOptron::getTimeSource(char *timeSourceString, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
+    getInfoAndSettings();  // this case we want to be accurate
+    switch(m_nTimeSource){
+        case TIME_SRC_UNKNOWN:
+            strncpy(timeSourceString, "Uknown or Missing", strMaxLen);
+            break;
+        case RS232_or_ETHERNET:
+            strncpy(timeSourceString, "RS232 or Ethernet", strMaxLen);
+            break;
+        case HAND_CONTROLLER:
+            strncpy(timeSourceString, "Hand Controller", strMaxLen);
+            break;
+        case GPS_CONTROLLER:
+            strncpy(timeSourceString, "GPS Controller", strMaxLen);
+            break;
+    }
+    return nErr;
+}
+
+int CiOptron::getSystemStatusPassive(char *strSystemStatus, unsigned int strMaxLen) {
+    int nErr = IOPTRON_OK;
+    // getInfoAndSettings();  // passive means someone else called this
+    switch(m_nStatus){
+        case STOPPED:
+            strncpy(strSystemStatus, "stopped at non-zero position", strMaxLen);
+            break;
+        case TRACKING:
+            strncpy(strSystemStatus, "tracking with PEC disabled", strMaxLen);
+            break;
+        case SLEWING:
+            strncpy(strSystemStatus, "mount slewing", strMaxLen);
+            break;
+        case GUIDING:
+            strncpy(strSystemStatus, "mount auto-guiding", strMaxLen);
+            break;
+        case FLIPPING:
+            strncpy(strSystemStatus, "mount meridian flipping", strMaxLen);
+            break;
+        case PEC_TRACKING:
+            strncpy(strSystemStatus, "tracking with PEC enabled", strMaxLen);
+            break;
+        case PARKED:
+            strncpy(strSystemStatus, "mount parked", strMaxLen);
+            break;
+        case HOMED:
+            strncpy(strSystemStatus, "mount stopped at zero position", strMaxLen);
+            break;
+    }
+    return nErr;
+
+}
+
+int CiOptron::getTrackingStatusPassive(char *strTrackingStatus, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
+    // getInfoAndSettings();  // passive means someone else called this
+    switch(m_nTrackingRate){
+        case TRACKING_SIDEREAL:
+            strncpy(strTrackingStatus, "sidereal rate", strMaxLen);
+            break;
+        case TRACKING_LUNAR:
+            strncpy(strTrackingStatus, "lunar rate", strMaxLen);
+            break;
+        case TRACKING_SOLAR:
+            strncpy(strTrackingStatus, "solar rate", strMaxLen);
+            break;
+        case TRACKING_KING:
+            strncpy(strTrackingStatus, "King rate", strMaxLen);
+            break;
+        case TRACKING_CUSTOM:
+            strncpy(strTrackingStatus, "custom rate", strMaxLen);
+            break;
+    }
+    return nErr;
+
+}
+
+#pragma mark - Limits
 int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 {
     int nErr = IOPTRON_OK;
@@ -992,7 +1091,7 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
     fprintf(Logfile, "[%s] [CiOptron::getLimits] called. doing nothing for now\n", timestamp);
     fflush(Logfile);
 #endif
-    // cache result and return them as these don't change.
+    // todo: cache result and return them as these don't change much.
     return nErr;
 }
 
@@ -1297,7 +1396,7 @@ int CiOptron::unPark()
     if(nErr)
         return nErr;
 
-    nErr = setSiderealTrackingOn();  // use simple command which may use "King" tracking which is better than straight sidereal
+    // dont start tracking.  nErr = setSiderealTrackingOn();  // use simple command which may use "King" tracking which is better than straight sidereal
 
     if(nErr) {
 #ifdef IOPTRON_DEBUG
