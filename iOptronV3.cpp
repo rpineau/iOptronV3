@@ -46,6 +46,7 @@ CiOptron::~CiOptron(void)
 int CiOptron::Connect(char *pszPort)
 {
     int nErr = IOPTRON_OK;
+    int connectSpeed = 115200;  // default for CEM120xxx
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
 	ltime = time(NULL);
@@ -56,19 +57,38 @@ int CiOptron::Connect(char *pszPort)
 #endif
 
     // 9600 8N1 (non CEM120xxx mounts) or 115200 (CEM120xx mounts)
-    nErr = m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
-    if(nErr == 0)
-        m_bIsConnected = true;
-    else
-        m_bIsConnected = false;
+    while(true) {
+        nErr = m_pSerx->open(pszPort, connectSpeed, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
+        if(nErr == 0)
+            m_bIsConnected = true;
+        else
+            m_bIsConnected = false;
 
-    if(!m_bIsConnected)
-        return nErr;
+        if(!m_bIsConnected) {
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
+            m_pSerx->close();
+            return nErr;
+        }
+        // get mount model to see if we're properly connected
+        nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
+        if(nErr)
+            m_bIsConnected = false;
 
-    // get mount model to see if we're properly connected
-    nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
-    if(nErr)
-        m_bIsConnected = false;
+        if(!m_bIsConnected && connectSpeed == 115200) {
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
+            m_pSerx->close();
+            connectSpeed = 9600;
+            continue;
+        }
+        else if(!m_bIsConnected && connectSpeed == 9600) {
+            // connection failed at both speed.
+            m_pSerx->close();
+            return ERR_NORESPONSE;
+        }
+        break;
+    }
 
     // get more info and status
     getInfoAndSettings();
