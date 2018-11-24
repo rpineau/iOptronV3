@@ -604,7 +604,7 @@ int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRa
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] called bTrackingOn: %s, bIgnoreRate: %s, bTrackRaArcSecPerHr: %f, bTrackDecArcSecPerHr %f\n", timestamp, bTrackingOn?"true":"false", bIgnoreRates?"true":"false", dTrackRaArcSecPerHr, dTrackDecArcSecPerHr);
+    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] called bTrackingOn: %s, bIgnoreRate: %s, dRaRateArcSecPerSec: %f, dDecRateArcSecPerSec %f\n", timestamp, bTrackingOn?"true":"false", bIgnoreRates?"true":"false", dRaRateArcSecPerSec, dDecRateArcSecPerSec);
     fflush(Logfile);
 #endif
 
@@ -615,16 +615,16 @@ int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRa
 
 // These commands select the tracking rate: select sidereal (“:RT0#”), lunar (“:RT1#”), solar (“:RT2#”), King (“:RT3#”), or custom (“:RT4#”).
 
-    if (dTrackRaArcSecPerHr == 0) {
+    if (dRaRateArcSecPerSec == 0) {
         strcpy(szCmd, ":RT3#");  // use 'macro' command to set sidereal/king (King is better)
-    } else if (dTrackRaArcSecPerHr == 0.5490149) {
+    } else if (dRaRateArcSecPerSec == 0.5490149) {
         strcpy(szCmd, ":RT1#");  // use 'macro' command to set to lunar
-    } else if (dTrackRaArcSecPerHr == 0.0410681) {
+    } else if (dRaRateArcSecPerSec == 0.0410681) {
         strcpy(szCmd, ":RT2#");  // use 'macro' command to set to solar
     } else {
         bCustomRate = true;
         // some custom rate (tracking a satellite or commet or something close)
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":RR%1.4f#", dTrackRaArcSecPerHr);
+        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":RR%1.4f#", dRaRateArcSecPerSec);
         //nErr = sendCommand(szCmd, szResp, 1);  // sets tracking rate and returns a single byte
         if (nErr)
             return nErr;
