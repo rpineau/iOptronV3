@@ -891,10 +891,8 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 
     X2MutexLocker ml(GetMutex());
 
-    dTrackRaArcSecPerHr = dRaRateArcSecPerSec * 3600;
-    dTrackDecArcSecPerHr = dDecRateArcSecPerSec * 3600;
 
-    nErr = m_iOptronV3.setTrackingRates(bTrackingOn, bIgnoreRates, dTrackRaArcSecPerHr, dTrackDecArcSecPerHr);
+    nErr = m_iOptronV3.setTrackingRates(bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
         ltime = time(NULL);
@@ -904,18 +902,18 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
         fflush(LogFile);
     }
 #endif
-    if(nErr)
-        return ERR_CMDFAILED;
-
+    if(nErr) {
 #ifdef IOPTRON_X2_DEBUG
-    if (LogFile) {
-        ltime = time(NULL);
-        timestamp = asctime(localtime(&ltime));
-        timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(LogFile, "[%s] setTrackingRates nErr = %d \n", timestamp, nErr);
-        fflush(LogFile);
-    }
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] setTrackingRates nErr = %d \n", timestamp, nErr);
+            fflush(LogFile);
+        }
 #endif
+        return ERR_CMDFAILED;
+    }
 
     return nErr;
 	

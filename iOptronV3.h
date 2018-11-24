@@ -93,8 +93,8 @@ public:
     int getTimeSource(char *timeSourceString, unsigned int strMaxLen);
     int getSystemStatusPassive(char *strSystemStatus, unsigned int strMaxLen);
 
-    int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dTrackRaArcSecPerHr, double dTrackDecArcSecPerHr);
-    int getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerHr, double &dTrackDecArcSecPerHr);
+    int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRateArcSecPerSec, double dDecRateArcSecPerSec);
+    int getTrackRates(bool &bTrackingOn, double &dRaRateArcSecPerSec, double &dDecRateArcSecPerSec);
     int setSiderealTrackingOn();
     int setTrackingOff();
     int getTrackingStatusPassive(char *strTrackingStatus, unsigned int strMaxLen);
