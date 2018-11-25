@@ -61,13 +61,11 @@ int CiOptron::Connect(char *pszPort)
         nErr = m_pSerx->open(pszPort, connectSpeed, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
         if(nErr == 0)
             m_bIsConnected = true;
-        else
-            m_bIsConnected = false;
-
-        if(!m_bIsConnected) {
+        else {
             m_pSerx->flushTx();
             m_pSerx->purgeTxRx();
             m_pSerx->close();
+            m_bIsConnected = false;
             return nErr;
         }
         // get mount model to see if we're properly connected
@@ -84,12 +82,21 @@ int CiOptron::Connect(char *pszPort)
         }
         else if(!m_bIsConnected && connectSpeed == 9600) {
             // connection failed at both speed.
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
             m_pSerx->close();
             return ERR_NORESPONSE;
         }
         break;
     }
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] CiOptron::Connect connected at %d on %s\n", timestamp, connectSpeed, pszPort);
+    fflush(Logfile);
+#endif
     // get more info and status
     getInfoAndSettings();
     return nErr;
