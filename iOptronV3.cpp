@@ -48,6 +48,7 @@ int CiOptron::Connect(char *pszPort)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    int connectSpeed = 115200;  // default for CEM120xxx
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
 	ltime = time(NULL);
@@ -58,21 +59,46 @@ int CiOptron::Connect(char *pszPort)
 #endif
 
     // 9600 8N1 (non CEM120xxx mounts) or 115200 (CEM120xx mounts)
-    nErr = m_pSerx->open(pszPort, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
-    if(nErr == 0)
-        m_bIsConnected = true;
-    else
-        m_bIsConnected = false;
+    while(true) {
+        nErr = m_pSerx->open(pszPort, connectSpeed, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") ;
+        if(nErr == 0)
+            m_bIsConnected = true;
+        else {
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
+            m_pSerx->close();
+            m_bIsConnected = false;
+            return nErr;
+        }
+        // get mount model to see if we're properly connected
+        nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
+        if(nErr)
+            m_bIsConnected = false;
 
-    if(!m_bIsConnected)
-        return nErr;
-
-    // get mount model to see if we're properly connected
-    nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
-    if(nErr) {
-        m_bIsConnected = false;
-        return nErr;
+        if(!m_bIsConnected && connectSpeed == 115200) {
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
+            m_pSerx->close();
+            connectSpeed = 9600;
+            continue;
+        }
+        else if(!m_bIsConnected && connectSpeed == 9600) {
+            // connection failed at both speed.
+            m_pSerx->flushTx();
+            m_pSerx->purgeTxRx();
+            m_pSerx->close();
+            return ERR_NORESPONSE;
+        }
+        break;
     }
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] CiOptron::Connect connected at %d on %s\n", timestamp, connectSpeed, pszPort);
+    fflush(Logfile);
+#endif
 
     nErr = sendCommand(":RT3#", szResp, 1);  // sets tracking rate to King by default .. effectively clears any custom rate that existed before
     if(nErr) {
