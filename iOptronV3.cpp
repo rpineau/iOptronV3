@@ -11,6 +11,7 @@ CiOptron::CiOptron() {
 
     m_dRa = 0.0;
     m_dDec = 0.0;
+    m_fCustomRaMultiplier = 1.0;   // sidereal to start
     slewToTimer.Reset();
     cmdTimer.Reset();
     trackRatesTimer.Reset();
@@ -46,6 +47,7 @@ CiOptron::~CiOptron(void)
 int CiOptron::Connect(char *pszPort)
 {
     int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
 	ltime = time(NULL);
@@ -67,8 +69,16 @@ int CiOptron::Connect(char *pszPort)
 
     // get mount model to see if we're properly connected
     nErr = getMountInfo(m_szHardwareModel, SERIAL_BUFFER_SIZE);
-    if(nErr)
+    if(nErr) {
         m_bIsConnected = false;
+        return nErr;
+    }
+
+    nErr = sendCommand(":RT3#", szResp, 1);  // sets tracking rate to King by default .. effectively clears any custom rate that existed before
+    if(nErr) {
+        m_bIsConnected = false;
+        return nErr;
+    }
 
     // get more info and status
     getInfoAndSettings();
@@ -597,7 +607,9 @@ int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRa
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    char szCmdTmp[SERIAL_BUFFER_SIZE];
     char szCmd[SERIAL_BUFFER_SIZE];
+    double dMountMultiplierRa = 1.0;
     bool bCustomRate = false;  // assume not a custom rate
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -613,34 +625,106 @@ int CiOptron::setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRa
 //           - Data entered with this command will be remembered through a power cycle and automatically re- applied on the next power up.
 // :RT4# - “Custom Tracking Rate”  must be selected before this command to take effect
 
-// These commands select the tracking rate: select sidereal (“:RT0#”), lunar (“:RT1#”), solar (“:RT2#”), King (“:RT3#”), or custom (“:RT4#”).
+// These commands select the tracking rate: select sidereal (“:RT0#”),
+// lunar (“:RT1#”), solar (“:RT2#”), King (“:RT3#”), or custom (“:RT4#”).
 
-    if (dRaRateArcSecPerSec == 0) {
-        strcpy(szCmd, ":RT3#");  // use 'macro' command to set sidereal/king (King is better)
-    } else if (dRaRateArcSecPerSec == 0.5490149) {
-        strcpy(szCmd, ":RT1#");  // use 'macro' command to set to lunar
-    } else if (dRaRateArcSecPerSec == 0.0410681) {
-        strcpy(szCmd, ":RT2#");  // use 'macro' command to set to solar
-    } else {
-        bCustomRate = true;
-        // some custom rate (tracking a satellite or commet or something close)
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":RR%1.4f#", dRaRateArcSecPerSec);
-        //nErr = sendCommand(szCmd, szResp, 1);  // sets tracking rate and returns a single byte
-        if (nErr)
-            return nErr;
-        strcpy(szCmd, ":RT4#");  // use 'macro' command to set to custom
-    }
+    if (bTrackingOn) {
+        if (bIgnoreRates) {
+            strcpy(szCmd, ":RT3#");  // use 'macro' command to set sidereal/king (King is better)
+        } else {
+            // Sidereal rate
+            if (-0.00001 < dRaRateArcSecPerSec && dRaRateArcSecPerSec < 0.00001 && -0.00001 < dDecRateArcSecPerSec && dDecRateArcSecPerSec < 0.00001) {
+                strcpy(szCmd, ":RT3#");  // use 'macro' command to set sidereal/king (King is better)
+                nErr = ERR_COMMANDNOTSUPPORTED;
+                m_fCustomRaMultiplier = 1.0;  // set immediately b/c we dont overwhelm the mount and take current cached values
+                m_nTrackingRate = TRACKING_KING; // set immediately b/c we dont overwhelm the mount and take current cached values
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] interpreted incoming rate as sidereal! \n", timestamp);
+                fflush(Logfile);
+#endif
+            }
+            // Lunar rate (tolerances increased based on JPL ephemeris generator)
+            else if (0.30 < dRaRateArcSecPerSec && dRaRateArcSecPerSec < 0.83 && -0.25 < dDecRateArcSecPerSec && dDecRateArcSecPerSec < 0.25) {
+                strcpy(szCmd, ":RT1#");  // use 'macro' command to set to lunar
+                nErr = ERR_COMMANDNOTSUPPORTED;
+                m_fCustomRaMultiplier = 1.0;  // set cache immediately
+                m_nTrackingRate = TRACKING_LUNAR; // set immediately b/c we dont overwhelm the mount and take current cached values
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] interpreted incoming rate as lunar! \n", timestamp);
+                fflush(Logfile);
+#endif
+            }
+            // Solar rate (tolerances increased based on JPL ephemeris generator, since TSX demanded a rate outside previous tolerance)
+            else if (0.037 < dRaRateArcSecPerSec && dRaRateArcSecPerSec < 0.043 && -0.017 < dDecRateArcSecPerSec && dDecRateArcSecPerSec < 0.017) {
+                strcpy(szCmd, ":RT2#");  // use 'macro' command to set to solar
+                nErr = ERR_COMMANDNOTSUPPORTED;
+                m_fCustomRaMultiplier = 1.0; // set cache immediately
+                m_nTrackingRate = TRACKING_SOLAR; // set immediately b/c we dont overwhelm the mount and take current cached values
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] interpreted incoming rate as solar! \n", timestamp);
+                fflush(Logfile);
+#endif
+            } else {
+                // full custom rate (tracking a satellite or comet or TSX asked (via user request) to add tracking)
+                dMountMultiplierRa = (15.0410681 - dRaRateArcSecPerSec) / 15.0410681;
+                if (dMountMultiplierRa < 0.0001) {
+                    // trying to 'stop' tracking by sending us sidereal.  ok,.. lets not do custom tracking
+                    strcpy(szCmd, ":ST0#");  // use command to stop tracking
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] interpreted incoming rate as wanting to be stopped! \n", timestamp);
+                    fflush(Logfile);
+#endif
+                } else {
+                    bCustomRate = true;
+                    m_fCustomRaMultiplier = dMountMultiplierRa;  // cache on instance since we dont ask mount over and over all the time
+                    m_nTrackingRate = TRACKING_CUSTOM; // set immediately b/c we dont overwhelm the mount and take current cached values
+                    memset(szCmdTmp, 0, SERIAL_BUFFER_SIZE);  // prep temp buffer to write to
+                    snprintf(szCmdTmp, SERIAL_BUFFER_SIZE, ":RR%1.4f#", dMountMultiplierRa);  // write including decimal to make it easy to remove
+
+                    memset(szCmd, 0, SERIAL_BUFFER_SIZE);  // prep actual buffer to send to mount
+                    memcpy(szCmd, szCmdTmp, 4);  // copy before decimal
+                    memcpy(szCmd+4, szCmdTmp+5, 5);  // copy after decimal
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] interpreted incoming rate as custom! \n", timestamp);
+                    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] we are at a custom rate!  Sending mount ra multiplier command: %s\n", timestamp, szCmd);
+                    fflush(Logfile);
+#endif
+                    nErr = sendCommand(szCmd, szResp, 1);  // sets tracking rate and returns a single byte
+                    if (nErr)
+                        return nErr;
+                    strcpy(szCmd, ":RT4#");  // use 'macro' command to set to custom
+                }
+
+            }
+
+        }
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] determined we are custom: %s.  Sending command: %s\n", timestamp, bCustomRate?"true":"false", szCmd);
-    fflush(Logfile);
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CiOptron::setTrackingRates] tracking on: %s, determined we are custom: %s.  Sending command: %s\n", timestamp, bTrackingOn?"true":"false", bCustomRate?"true":"false", szCmd);
+        fflush(Logfile);
 #endif
-    //nErr = sendCommand(szCmd, szResp, 1);  // set tracking 'go'.  all commands return a single byte
-    if (nErr)
-        return nErr;
+        nErr = sendCommand(szCmd, szResp, 1);  // set tracking 'go'.  all commands return a single byte
+        if (nErr)
+            return nErr;
+    }
 
     return nErr;
 }
@@ -649,6 +733,8 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    char szRa[SERIAL_BUFFER_SIZE];
+    double fRa = m_fCustomRaMultiplier;  // initialize with cached value
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -670,13 +756,20 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
 
         nErr = sendCommand(":GTR#", szResp, 6);  // lets see what we're at anyway
 
+        memset(szRa, 0, SERIAL_BUFFER_SIZE);
+        szRa[0] = szResp[0];
+        szRa[1] = '.';
+        memcpy(szRa+2, szResp+1, 4);
+        fRa = atof(szRa);
+
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
-        fprintf(Logfile, "[%s] [CiOptron::getTrackRates] asking mount for actual rate: %s.\n", timestamp, szResp);
+        fprintf(Logfile, "[%s] [CiOptron::getTrackRates] asked mount for actual rate multiplier.  response: %s.  And interpreted to be a double: %f.\n", timestamp, szResp, fRa);
         fflush(Logfile);
 #endif
+
     }
 
     switch (m_nStatus) {
@@ -709,8 +802,14 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
                 dTrackRaArcSecPerSec = 0.0410681;
                 dTrackDecArcSecPerSec = 0.0;
             } else if (m_nTrackingRate == TRACKING_KING) {
+                bTrackingOn = true;
                 dTrackRaArcSecPerSec = 0.0;
                 dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_CUSTOM) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 15.0410681 - (15.0410681 * fRa);
+                dTrackDecArcSecPerSec = 0.0;
+
             }
             break;
         case PEC_TRACKING:
@@ -727,7 +826,12 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
                 dTrackRaArcSecPerSec = 0.0410681;
                 dTrackDecArcSecPerSec = 0.0;
             } else if (m_nTrackingRate == TRACKING_KING) {
+                bTrackingOn = true;
                 dTrackRaArcSecPerSec = 0.0;
+                dTrackDecArcSecPerSec = 0.0;
+            } else if (m_nTrackingRate == TRACKING_CUSTOM) {
+                bTrackingOn = true;
+                dTrackRaArcSecPerSec = 15.0410681 - (15.0410681 * fRa);
                 dTrackDecArcSecPerSec = 0.0;
             }
             break;
@@ -741,7 +845,7 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] done. returning: bTrackingOn: %s, dTrackRaArcSecPerHr: %f, dTrackDecArcSecPerHr: %f\n", timestamp, bTrackingOn?"true":"false", dTrackRaArcSecPerSec, dTrackDecArcSecPerSec);
+    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] done. returning: bTrackingOn: %s, dTrackRaArcSecPerSec: %f, dTrackDecArcSecPerSec: %f\n", timestamp, bTrackingOn?"true":"false", dTrackRaArcSecPerSec, dTrackDecArcSecPerSec);
     fflush(Logfile);
 #endif
     return nErr;

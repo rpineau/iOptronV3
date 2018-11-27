@@ -138,6 +138,7 @@ private:
     float   m_fLong;
     int     m_nStatus;			// defined in iOptronStatus (stopped tracking slewing.. etc)
     int  	m_nTrackingRate;    // sidereal, lunar, solar, king, custom defined by iOptronTrackingRate
+    float	m_fCustomRaMultiplier; // cached tracking rate multiplier received from :GTR# call in getTrackRates when tracking custom
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
     char    m_sModel[5];		// save a selectable/comparable version of the model of mount
