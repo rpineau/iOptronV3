@@ -1302,11 +1302,29 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     if(nErr)
         return nErr;
 
+    // :QAP#  Response: “0”, “1”, “2”
+    //This command queries the number of available position for most recently defined right ascension and declination coordinates
+    // which not exceed the mechanical limits, altitude limits and meridian flip limits (including normal position and counterweight up position).
+    // Checking if we will exceed mount's limits.  The possible number is 0, 1 and 2.
+    nErr = sendCommand(":QAP#", szResp, 1);
+    if(nErr)
+        return nErr;
+    if (szResp[0]==0) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s exceed mechanical limits, altitude limits or meridian flip limits.\n", timestamp, szCmdRa, szCmdDec);
+        fflush(Logfile);
+#endif
+        return ERR_LIMITSEXCEEDED;
+    }
+
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s\n", timestamp, szCmdRa, szCmdDec);
+    fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Slewing to 1 of %c position(s) using commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s\n", timestamp, szResp[0], szCmdRa, szCmdDec);
     fflush(Logfile);
 #endif
 
