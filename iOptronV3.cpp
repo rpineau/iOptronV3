@@ -475,6 +475,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] nDec : %d\n", timestamp, nDec);
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Ra : %f\n", timestamp, dRa);
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Dec : %f\n", timestamp, dDec);
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] pier side: : %s\n", timestamp, (szResp[18]=='0')?"pier east" : (szResp[18]=='1')?"pier west":"pier indeterminate");
     fflush(Logfile);
 #endif
 
@@ -482,7 +483,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
 }
 
 #pragma mark - Sync and Cal - used by SyncMountInterface
-int CiOptron::syncTo(double dRa, double dDec)
+int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 {
     int nErr = IOPTRON_OK;
     int nRa, nDec;
@@ -492,12 +493,9 @@ int CiOptron::syncTo(double dRa, double dDec)
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::syncTo] called Ra : %f  Dec: %f\n", timestamp, dRa, dDec);
+    fprintf(Logfile, "[%s] [CiOptron::syncTo] called Ra : %f  Dec: %f\n", timestamp, dRaInDecimalHours, dDecInDecimalDegrees);
     fflush(Logfile);
 #endif
-    nErr = getInfoAndSettings();
-    if(nErr)
-        return nErr;
 
     if (m_nGPSStatus != GPS_RECEIVING_VALID_DATA)
         return ERR_CMDFAILED;
@@ -505,23 +503,13 @@ int CiOptron::syncTo(double dRa, double dDec)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(Logfile, "[%s] [CiOptron::syncTo] verify GPS good and connected.  Ra : %f  Dec: %f\n", timestamp, dRa, dDec);
-    fflush(Logfile);
-#endif
-
     // iOptron:
-    // TTTTTTTT(T) in 0.01 arc-seconds
-
-    //  current logitude comes from getInfoAndSettings() and returns sTTTTTTTT (1+8) where
-    //    s is the sign -/+ and TTTTTTTT is longitude in 0.01 arc-seconds
-    //    range: [-64,800,000, +64,800,000] East is positive, and the resolution is 0.01 arc-second.
+    // :SRATTTTTTTTT#   right ascension.
+    // Valid data range is [0, 129,600,000].
+    // Note: The resolution is 0.01 arc-second.
     // TSX provides RA and DEC in degrees with a decimal
-    nRa = int((dRa*60*60)/0.01);
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%+.8d#", nRa);
+    nRa = int((dRaInDecimalHours*60*60)/0.01);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -536,11 +524,11 @@ int CiOptron::syncTo(double dRa, double dDec)
         return nErr;
     }
 
-    //  current latitude againg from getInfoAndSettings() returns TTTTTTTT (8)
-    //    which is current latitude plus 90 degrees.
-    //    range is [0, 64,800,000]. Note: North is positive, and the resolution is 0.01 arc-second
-    nDec = int(((dDec+90)*60*60)/0.01);
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sds%+.8d#", nDec);
+    // :SdsTTTTTTTT#    dec
+    // Valid data range is [-32,400,000, +32,400,000].
+    // Note: The resolution is 0.01 arc-second.
+    nDec = int((dDecInDecimalDegrees * 60 * 60) / 0.01);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sd%+08d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
@@ -552,14 +540,11 @@ int CiOptron::syncTo(double dRa, double dDec)
 
     nErr = sendCommand(szCmd, szResp, 1);  // set DEC
     if(nErr) {
-        // clear RA?
         return nErr;
     }
 
     nErr = sendCommand(":CM#", szResp, 1);  // call Snc
     if(nErr) {
-        // clear RA?
-        // clear DEC?
         return nErr;
     }
 
@@ -1302,14 +1287,16 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     }
 
     dRaArcSec = (dRaInDecimalHours * 60 * 60) / 0.01;  // actually hundreths of arc sec
-    // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000]. Note: The resolution is 0.01 arc-second.
+    // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000].
+    // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
     nErr = sendCommand(szCmdRa, szResp, 1);
     if(nErr)
         return nErr;
 
     dDecArcSec = (dDecInDecimalDegrees * 60 * 60) / 0.01; // actually hundreths of arc sec - converts same way
-    // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000]. Note: The resolution is 0.01 arc-second.
+    // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
+    // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+08d#", int(dDecArcSec));
     nErr = sendCommand(szCmdDec, szResp, 1);
     if(nErr)
