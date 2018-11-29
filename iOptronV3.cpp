@@ -427,7 +427,7 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
 
-    char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE];
+    char szRa[SERIAL_BUFFER_SIZE], szDec[SERIAL_BUFFER_SIZE], szPier[SERIAL_BUFFER_SIZE], szCounter[SERIAL_BUFFER_SIZE];
     int nRa, nDec;
 
     // don't ask the mount too often, returned cached value
@@ -467,6 +467,12 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     m_dRa = dRa;
     m_dDec = dDec;
 
+    memcpy(szPier, szResp+18, 1);
+    m_pierStatus = atoi(szPier);
+
+    memcpy(szCounter, szResp+19, 1);
+    m_counterWeightStatus = atoi(szCounter);
+
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
@@ -475,7 +481,8 @@ int CiOptron::getRaAndDec(double &dRa, double &dDec)
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] nDec : %d\n", timestamp, nDec);
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Ra : %f\n", timestamp, dRa);
     fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] Dec : %f\n", timestamp, dDec);
-    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] pier side: : %s\n", timestamp, (szResp[18]=='0')?"pier east" : (szResp[18]=='1')?"pier west":"pier indeterminate");
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] pier side: : %s\n", timestamp, (m_pierStatus==PIER_EAST)?"pier east" : (m_pierStatus==PIER_WEST)?"pier west":"pier indeterminate");
+    fprintf(Logfile, "[%s] [CiOptron::getRaAndDec] counterweight status: : %s\n", timestamp, (m_counterWeightStatus==COUNTER_WEIGHT_UP)?"counterweight up" : "counterweight normal");
     fflush(Logfile);
 #endif
 
@@ -1238,7 +1245,7 @@ int CiOptron::getTrackingStatusPassive(char *strTrackingStatus, unsigned int str
 
 }
 
-#pragma mark - Limits
+#pragma mark - AsymmetricalEquatorialInterface
 int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
 {
     int nErr = IOPTRON_OK;
@@ -1253,6 +1260,29 @@ int CiOptron::getLimits(double &dHoursEast, double &dHoursWest)
     return nErr;
 }
 
+int CiOptron::beyondThePole(bool& bYes)
+{
+    int nErr = IOPTRON_OK;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::beyondThePole] called. \n", timestamp);
+    fflush(Logfile);
+#endif
+
+    //bYes = (m_pierStatus == PIER_WEST) && (m_counterWeightStatus == COUNTER_WEIGHT_UP); // this means beyond the meridian
+    bYes = (m_pierStatus == PIER_WEST);  // this means OTA even hinting to be on that side of the pier.  Likely this is what TSX wants
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(Logfile, "[%s] [CiOptron::beyondThePole] finished.  Returned: %s since piers is: %s \n", timestamp, bYes?"true":"false", (m_pierStatus==PIER_EAST)?"pier east" : (m_pierStatus==PIER_WEST)?"pier west":"pier indeterminate");
+    fflush(Logfile);
+#endif
+    return nErr;
+}
 
 
 #pragma mark - Slew

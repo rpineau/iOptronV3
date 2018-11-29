@@ -51,6 +51,10 @@ enum iOptronTrackingRate {TRACKING_SIDEREAL=0, TRACKING_LUNAR, TRACKING_SOLAR, T
 
 enum iOptronTimeSource {TIME_SRC_UNKNOWN=0, RS232_or_ETHERNET=1, HAND_CONTROLLER, GPS_CONTROLLER};
 
+enum iOptronPierStatus {PIER_EAST=0, PIER_WEST=1, PIER_INDETERMINATE};
+
+enum iOptronCounterWeightStatus {COUNTER_WEIGHT_UP=0, COUNTER_WEIGHT_NORMAL=1};
+
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
@@ -112,7 +116,7 @@ public:
     int unPark();
 
     int getRefractionCorrEnabled(bool &bEnabled);
-
+    int beyondThePole(bool& bYes);
     int getLimits(double &dHoursEast, double &dHoursWest);
 
     int Abort();
@@ -139,6 +143,8 @@ private:
     int     m_nStatus;			// defined in iOptronStatus (stopped tracking slewing.. etc)
     int  	m_nTrackingRate;    // sidereal, lunar, solar, king, custom defined by iOptronTrackingRate
     float	m_fCustomRaMultiplier; // cached tracking rate multiplier received from :GTR# call in getTrackRates when tracking custom
+    int     m_pierStatus;         // which side of the meridian is the OTA
+    int     m_counterWeightStatus; // counterweight up (about to get ugly) or normal
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
     char    m_sModel[5];		// save a selectable/comparable version of the model of mount

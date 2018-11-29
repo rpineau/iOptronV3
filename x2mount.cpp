@@ -1282,7 +1282,7 @@ bool X2Mount::knowsBeyondThePole()
 }
 
 int X2Mount::beyondThePole(bool& bYes) {
-	// bYes = m_iOptronV3.GetIsBeyondThePole();
+    m_iOptronV3.beyondThePole(bYes);
 	return SB_OK;
 }
 
