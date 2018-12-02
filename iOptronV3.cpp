@@ -511,9 +511,6 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     }
 
     nErr = sendCommand(":CM#", szResp, 1);  // call Snc
-    if(nErr) {
-        return nErr;
-    }
 
      return nErr;
 }
@@ -688,24 +685,25 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called.\n", getTimestamp());
     fflush(Logfile);
 #endif
+    memset(szResp, 0, SERIAL_BUFFER_SIZE);
 
     // don't ask the mount its general status too often .. doesn't change much
     if(trackRatesTimer.GetElapsedSeconds()>1.0) {
         getInfoAndSettings();
         trackRatesTimer.Reset();
 
-        // if we really wanted to be mega flexible, we'd call :GTR#
+        // iOptron bug in firmware: this always returns 1.0000: :GTR#
         // Response: “nnnnn#”
         // This command gets the saved custom tracking rate, the tracking rate is n.nnnn * sidereal rate.
         // Valid data range is [0.1000, 1.9000] * sidereal rate.
 
-        nErr = sendCommand(":GTR#", szResp, 6);  // lets see what we're at anyway
-
-        memset(szRa, 0, SERIAL_BUFFER_SIZE);
-        szRa[0] = szResp[0];
-        szRa[1] = '.';
-        memcpy(szRa+2, szResp+1, 4);
-        fRa = atof(szRa);
+//        nErr = sendCommand(":GTR#", szResp, 6);  // lets see what we're at anyway
+//
+//        memset(szRa, 0, SERIAL_BUFFER_SIZE);
+//        szRa[0] = szResp[0];
+//        szRa[1] = '.';
+//        memcpy(szRa+2, szResp+1, 4);
+//        fRa = atof(szRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::getTrackRates] asked mount for actual rate multiplier.  response: %s.  And interpreted to be a double: %f.\n", getTimestamp(), szResp, fRa);
