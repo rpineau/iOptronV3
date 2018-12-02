@@ -53,7 +53,9 @@ enum iOptronTimeSource {TIME_SRC_UNKNOWN=0, RS232_or_ETHERNET=1, HAND_CONTROLLER
 
 enum iOptronPierStatus {PIER_EAST=0, PIER_WEST=1, PIER_INDETERMINATE};
 
-enum iOptronCounterWeightStatus {COUNTER_WEIGHT_UP=0, COUNTER_WEIGHT_NORMAL=1};
+enum iOptronCounterWeightStatus {COUNTER_WEIGHT_UP=0, COUNTER_WEIGHT_NORMAL};
+
+enum iSlewTrackLimitsStatus {LIMITS_EXCEEDED_OR_BELOW_ALTITUDE=0, NO_ISSUE_SLEW_TRACK_ONE_OPTION, NO_ISSUE_SLEW_TRACK_TWO_OPTIONS, NO_STATUS};
 
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
@@ -90,7 +92,7 @@ public:
     int getMountInfo(char *model, unsigned int strMaxLen);
     int getFirmwareVersion(char *version, unsigned int strMaxLen);
 
-    int getRaAndDec(double &dRa, double &dDec);
+    int getRaAndDec(double &dRa, double &dDec, bool bForceMountCall);
     int syncTo(double dRa, double dDec);
     int isGPSGood(bool &bGPSGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
@@ -105,6 +107,7 @@ public:
 
     int startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees);
     int isSlewToComplete(bool &bComplete);
+    int endSlewTo(void);
 
     int startOpenSlew(const MountDriverInterface::MoveDir Dir, unsigned int nRate);
     int stopOpenLoopMove();
@@ -118,6 +121,7 @@ public:
     int getRefractionCorrEnabled(bool &bEnabled);
     int beyondThePole(bool& bYes);
     int getLimits(double &dHoursEast, double &dHoursWest);
+    double flipHourAngle();
 
     int Abort();
 
@@ -145,6 +149,8 @@ private:
     float	m_fCustomRaMultiplier; // cached tracking rate multiplier received from :GTR# call in getTrackRates when tracking custom
     int     m_pierStatus;         // which side of the meridian is the OTA
     int     m_counterWeightStatus; // counterweight up (about to get ugly) or normal
+    int     m_nDegreesPastMeridian;  // degrees past the meridian
+    int	 	m_nCacheLimitStatus; // cache if we had no, 1, or 2 slew options last time we slewed.  Filled when we startSlewTo and issue command :QAP#
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate
     char    m_sModel[5];		// save a selectable/comparable version of the model of mount
@@ -163,9 +169,6 @@ private:
 	double  m_dGotoDECTarget;                      // Current Goto Target Dec;
 	
     MountDriverInterface::MoveDir      m_nOpenLoopDir;
-
-    // limits don't change mid-course so we cache them
-    bool    m_bLimitCached;
     
     int     sendCommand(const char *pszCmd, char *pszResult, int nExpectedResultLen);
     int     readResponse(char *szRespBuffer, int nBytesToRead);
@@ -188,6 +191,7 @@ private:
     char *timestamp;
 	time_t ltime;
 	FILE *Logfile;	  // LogFile
+	char* getTimestamp();
 #endif
 	
 };

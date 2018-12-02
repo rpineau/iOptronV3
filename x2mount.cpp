@@ -689,7 +689,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
     X2MutexLocker ml(GetMutex());
 
 	// Get the RA and DEC from the mount
-	nErr = m_iOptronV3.getRaAndDec(ra, dec);
+	nErr = m_iOptronV3.getRaAndDec(ra, dec, false);
     if(nErr) {
         nErr = ERR_CMDFAILED;
 
@@ -815,7 +815,13 @@ int X2Mount::endSlewTo(void)
         fflush(LogFile);
     }
 #endif
-    return SB_OK;
+    if(!m_bLinked)
+        return ERR_NOLINK;
+
+    X2MutexLocker ml(GetMutex());
+
+    return m_iOptronV3.endSlewTo();
+
 }
 
 
@@ -1288,17 +1294,21 @@ int X2Mount::beyondThePole(bool& bYes) {
 
 
 double X2Mount::flipHourAngle() {
+
+    double dFlipHourToRet;
+
+    dFlipHourToRet = m_iOptronV3.flipHourAngle();
 #ifdef IOPTRON_X2_DEBUG
 	if (LogFile) {
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
+		fprintf(LogFile, "[%s] flipHourAngle called and returning %f\n", timestamp, dFlipHourToRet);
         fflush(LogFile);
 	}
 #endif
 
-	return 0.0;
+    return dFlipHourToRet;
 }
 
 
