@@ -891,8 +891,6 @@ bool X2Mount::isSynced(void)
 int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec)
 {
     int nErr = SB_OK;
-    double dTrackRaArcSecPerHr;
-    double dTrackDecArcSecPerHr;
     if(!m_bLinked)
         return ERR_NOLINK;
 

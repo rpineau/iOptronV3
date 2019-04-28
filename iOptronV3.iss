@@ -3,14 +3,14 @@
 
 #define MyAppName "iOptronV3 X2 Driver"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "RTI-Zone"
+#define MyAppPublisher "RTI-Zone and Eric Roubal"
 #define MyAppURL "https://rti-zone.org"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{75D76F1E-19D9-4825-95EB-28830C840A84}
+AppId={{56ADA3FE-711A-4DC4-A93D-F3AB8131C692}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}

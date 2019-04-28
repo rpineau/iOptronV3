@@ -20,13 +20,13 @@ CiOptron::CiOptron() {
     getAtParkTimer.Reset();
 }
 
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
 void CiOptron::setLogFile(FILE *daFile) {
     Logfile = daFile;
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     fprintf(Logfile, "[%s] IOPTRON setLogFile Called\n", getTimestamp());
     fflush(Logfile);
-#endif
 }
+#endif
 
 CiOptron::~CiOptron(void)
 {
