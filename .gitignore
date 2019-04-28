@@ -9,5 +9,5 @@ Release
 *.pkg
 *.so
 *.pkg
-.idea
+.idea/
 
