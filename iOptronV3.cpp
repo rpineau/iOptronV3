@@ -498,7 +498,7 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // Valid data range is [-32,400,000, +32,400,000].
     // Note: The resolution is 0.01 arc-second.
     nDec = int((dDecInDecimalDegrees * 60 * 60) / 0.01);
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sd%+08d#", nDec);
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sd%+09d#", nDec);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     fprintf(Logfile, "[%s] [CiOptron::syncTo] computed command for DEC coordinate set: %s\n", getTimestamp(), szCmd);
@@ -1183,7 +1183,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     dDecArcSec = (dDecInDecimalDegrees * 60 * 60) / 0.01; // actually hundreths of arc sec - converts same way
     // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
     // Note: The resolution is 0.01 arc-second.
-    snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+08d#", int(dDecArcSec));
+    snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
     nErr = sendCommand(szCmdDec, szResp, 1);
     if(nErr)
         return nErr;
