@@ -9,8 +9,8 @@ Release
 *.pkg
 *.so
 *.pkg
-.idea/
-.idea/codeStyles/Project.xml
-.idea/iOptronV3.iml
-
+.idea
+.idea/codeStyles/*.xml
+.idea/*.xml
+.idea/*.iml
 *.VC.db
