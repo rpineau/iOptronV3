@@ -10,8 +10,10 @@ Release
 *.so
 *.pkg
 .idea
-<<<<<<< HEAD
 .idea/codeStyles/*.xml
 .idea/*.xml
 .idea/*.iml
 *.VC.db
+.idea/
+.idea/codeStyles/Project.xml
+.idea/iOptronV3.iml
