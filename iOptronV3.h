@@ -27,7 +27,7 @@
 #include "StopWatch.h"
 
 
-// #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
+#define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
 enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD_RESPONSE, COMMAND_FAILED, IOPTRON_ERROR};
 // Response: “0010”, “0011”, “0025”, “0026”, “0030”, “0045”, “0060”, “0061”, “0120” “0121”, “0122”, “5010”, “5035”, “5045”

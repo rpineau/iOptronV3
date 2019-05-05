@@ -28,14 +28,14 @@
 // Include files for iOptron mount
 #include "iOptronV3.h"
 
-#define DRIVER_VERSION 1.01;
+#define DRIVER_VERSION 1.02;
 
 #define PARENT_KEY			"iOptronV3"
 #define CHILD_KEY_PORT_NAME "PortName"
 #define MAX_PORT_NAME_SIZE 120
 
 
-// #define IOPTRON_X2_DEBUG    // Define this to have log files
+#define IOPTRON_X2_DEBUG    // Define this to have log files
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM1"
