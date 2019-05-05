@@ -57,11 +57,6 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 
 X2Mount::~X2Mount()
 {
-	// Write the stored values
-
-    if(m_bLinked)
-        m_iOptronV3.Disconnect();
-    
     if (m_pSerX)
 		delete m_pSerX;
 	if (m_pTheSkyXForMounts)
@@ -70,22 +65,14 @@ X2Mount::~X2Mount()
 		delete m_pSleeper;
 	if (m_pIniUtil)
 		delete m_pIniUtil;
-	if (m_pLogger)
+    if (m_pLogger)
 		delete m_pLogger;
-	if (m_pIOMutex)
+    if (m_pIOMutex)
 		delete m_pIOMutex;
 	if (m_pTickCount)
 		delete m_pTickCount;
-	
-#ifdef IOPTRON_X2_DEBUG
-	// Close LogFile
-	if (LogFile) {
-        fflush(LogFile);
-		fclose(LogFile);
-	}
-#endif
-	
-}
+ }
+
 
 int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 {
@@ -604,9 +591,27 @@ int X2Mount::terminateLink(void)
 
 	X2MutexLocker ml(GetMutex());
 
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] terminateLink calling Disconnect\n", timestamp);
+        fflush(LogFile);
+    }
+#endif
     nErr = m_iOptronV3.Disconnect();
     m_bLinked = false;
 
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] Disconnected\n", timestamp);
+        fflush(LogFile);
+    }
+#endif
     return nErr;
 }
 
@@ -709,6 +714,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 int X2Mount::abort()
 {
     int nErr = SB_OK;
+
     if(!m_bLinked)
         return ERR_NOLINK;
 
