@@ -260,22 +260,28 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] *** CiOptron::sendCommand sending : %s\n", getTimestamp(), pszCmd);
+        fprintf(Logfile, "[%s] *** CiOptron::sendCommand sending : '%s'\n", getTimestamp(), pszCmd);
         fflush(Logfile);
     }
 #endif
 
     nErr = m_pSerx->writeFile((void *)pszCmd, strlen((char*)pszCmd), ulBytesWrite);
     m_pSerx->flushTx();
-    if(nErr)
+    if(nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+            fprintf(Logfile, "[%s] *** CiOptron::sendCommand ***** ERROR SENDING COMMAND **** error = %d , pszCmd : '%s'\n", getTimestamp(), nErr, pszCmd);
+            fflush(Logfile);
+        }
+#endif
         return nErr;
-
+    }
     // read response
     nErr = readResponse(szResp, nExpectedResultLen);
     if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
-            fprintf(Logfile, "[%s] *** CiOptron::sendCommand ***** ERROR READING RESPONSE **** error = %d , response : %s\n", getTimestamp(), nErr, szResp);
+            fprintf(Logfile, "[%s] *** CiOptron::sendCommand ***** ERROR READING RESPONSE **** error = %d , response : '%s'\n", getTimestamp(), nErr, szResp);
             fflush(Logfile);
         }
 #endif
@@ -283,7 +289,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
     }
 #if defined ND_DEBUG && ND_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] *** CiOptron::sendCommand response : %s\n", getTimestamp(), szResp);
+        fprintf(Logfile, "[%s] *** CiOptron::sendCommand response : '%s'\n", getTimestamp(), szResp);
         fflush(Logfile);
     }
 #endif
@@ -310,7 +316,7 @@ int CiOptron::readResponse(char *szRespBuffer, int nBytesToRead)
     if(nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 3
         if (Logfile) {
-            fprintf(Logfile, "[%s] [CiOptron::readResponse] szRespBuffer = %s\n", getTimestamp(), szRespBuffer);
+            fprintf(Logfile, "[%s] [CiOptron::readResponse] szRespBuffer = '%s'\n", getTimestamp(), szRespBuffer);
             fflush(Logfile);
         }
 #endif
