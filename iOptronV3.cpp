@@ -1215,22 +1215,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         // :MS1#   slew to normal position
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        if (nErr) {
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS1.  nErr: %i\n", getTimestamp(), nErr);
-            fflush(Logfile);
-        }
-#endif
     } else if (m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // :MS2#   slew to counterweight up position I think
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS2#", szResp, 1);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        if (nErr) {
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2.  nErr: %i\n", getTimestamp(), nErr);
-            fflush(Logfile);
-        }
-#endif
     } else if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
         return ERR_LIMITSEXCEEDED;  // redundant but just in case
     }
@@ -1238,10 +1226,6 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     if (nErr) {
         return nErr;
     } else if (atoi(szResp) == 0 && m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount even though it told me it only had one position to go to.  Gettn out of dodge.\n", getTimestamp());
-        fflush(Logfile);
-#endif
         return ERR_LIMITSEXCEEDED;  // regular slew to a place that is bad for mount
     } else if (atoi(szResp) == 0 && m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // attempt was made to slew to counterweight up position, and mount said NO.. so attempt normal
@@ -1253,16 +1237,8 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
         if (nErr) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2 then :MS1  nErr: %i\n", getTimestamp(), nErr);
-            fflush(Logfile);
-#endif
             return nErr;
         } else if (atoi(szResp) == 0) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount after attempting to slew to counterweight up option.  (:MS2 then :MS1).  Gettn out of dodge.\n", getTimestamp());
-            fflush(Logfile);
-#endif
             return ERR_LIMITSEXCEEDED;
         } else {
             m_nStatus = SLEWING;
@@ -1304,18 +1280,7 @@ int CiOptron::endSlewTo()
             // picked the 'wrong' slew.  Re-slew to normal position
             memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
             nErr = sendCommand(":MS1#", szResp, 1);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            if (nErr) {
-                fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: sendCommand bombed sending :MS1 with value nErr: %i.  Gettn out of dodge.\n", getTimestamp(), nErr);
-                fflush(Logfile);
-                return nErr;
-            }
-#endif
             if (atoi(szResp) == 0) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-                fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: reslewing to 'normal' counterweight down position gave me a '0' back (The desired object is below the altitude limit or exceed the mechanical limits.).  Gettn out of dodge.\n", getTimestamp());
-                fflush(Logfile);
-#endif
                 nErr = ERR_LIMITSEXCEEDED;  // all is lost
             } else {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
