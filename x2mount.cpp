@@ -34,7 +34,10 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 #endif
 	LogFile = fopen(m_sLogfilePath.c_str(), "w");
     m_iOptronV3.setLogFile(LogFile);
-	fprintf(LogFile, "[%s] iOptronV3 X2 plugin version %3.3f\n", timestamp, DRIVER_VERSION);
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] iOptronV3 X2 plugin version %3.3f\n", timestamp, DRIVER_VERSION);
 	fflush(LogFile);
 #endif
 	
