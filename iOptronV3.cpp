@@ -1289,6 +1289,11 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 #endif
 
     nErr = isGPSGood(bGPSGood);
+    if (nErr) {
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error calling isGPSGood.  nErr: %i\n", getTimestamp(), nErr);
+        fflush(Logfile);
+        return nErr;
+    }
 
     if (!bGPSGood) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -1306,7 +1311,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
     nErr = sendCommand(szCmdRa, szResp, 1);
     if (nErr) {
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdDec, nErr);
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdRa, nErr);
         fflush(Logfile);
         return nErr;
     }
