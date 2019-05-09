@@ -287,7 +287,7 @@ int CiOptron::sendCommand(const char *pszCmd, char *pszResult, int nExpectedResu
 #endif
         return nErr;
     }
-#if defined ND_DEBUG && ND_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] *** CiOptron::sendCommand response : '%s'\n", getTimestamp(), szResp);
         fflush(Logfile);
@@ -908,18 +908,38 @@ int CiOptron::gotoFlatsPosition() {
     // set alt/az position
     // altitude: :SasTTTTTTTT# (Valid data range is [-32,400,000, 32,400,000])
     nErr = sendCommand(":Sa+32400000#", szResp, 1);  // point straight up
-    if (nErr)
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] error %i sending :Sa+32400000# : %s\n", getTimestamp(), nErr, szResp);
+            fflush(Logfile);
+        }
+#endif
         return nErr;
-
+    }
     // azimuth: :SzTTTTTTTTT# (Valid data range is [0, 129,600,000])
     nErr = sendCommand(":Sz000000000#", szResp, 1);  // point north
-    if (nErr)
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] error %i sending :Sz000000000# : %s\n", getTimestamp(), nErr, szResp);
+            fflush(Logfile);
+        }
+#endif
         return nErr;
+    }
 
     // Goto Zero alt/az position defined
     nErr = sendCommand(":MSS#", szResp, 1);
-    if (nErr)
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::gotoFlatsPosition] error %i sending :MSS# : %s\n", getTimestamp(), nErr, szResp);
+            fflush(Logfile);
+        }
+#endif
         return nErr;
+    }
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
@@ -981,16 +1001,16 @@ int CiOptron::getUtcOffset(char *pszUtcOffsetInMins)
 
     // Get time related info
     nErr = sendCommand(":GUT#", szResp, 19);
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  nErr = %i, Result: %s\n", getTimestamp(), nErr, pszUtcOffsetInMins);
+        fflush(Logfile);
+    }
+#endif
 
     memset(pszUtcOffsetInMins,0, SERIAL_BUFFER_SIZE);
     memcpy(pszUtcOffsetInMins, szResp, 4);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  Result: %s\n", getTimestamp(), pszUtcOffsetInMins);
-        fflush(Logfile);
-    }
-#endif
     return nErr;
 }
 
@@ -1025,7 +1045,7 @@ int CiOptron::setUtcOffset(char *pszUtcOffsetInMins)
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] done\n", getTimestamp());
+        fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] done, nErr = %i\n", getTimestamp(), nErr);
         fflush(Logfile);
     }
 #endif
@@ -1102,7 +1122,7 @@ int CiOptron::setDST(bool bDaylight)
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::setDST] done\n", getTimestamp());
+        fprintf(Logfile, "[%s] [CiOptron::setDST] done, nErr = %i\n", getTimestamp(), nErr);
         fflush(Logfile);
     }
 #endif
@@ -1285,16 +1305,22 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
     nErr = sendCommand(szCmdRa, szResp, 1);
-    if(nErr)
+    if (nErr) {
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdDec, nErr);
+        fflush(Logfile);
         return nErr;
+    }
 
     dDecArcSec = (dDecInDecimalDegrees * 60 * 60) / 0.01; // actually hundreths of arc sec - converts same way
     // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
     // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
     nErr = sendCommand(szCmdDec, szResp, 1);
-    if(nErr)
+    if (nErr) {
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdDec, nErr);
+        fflush(Logfile);
         return nErr;
+    }
 
     memset(szResp, 0, SERIAL_BUFFER_SIZE);  // start over with response buffer
     // :QAP#  Response: “0”, “1”, “2”
@@ -1302,11 +1328,14 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // which not exceed the mechanical limits, altitude limits and meridian flip limits (including normal position and counterweight up position).
     // Checking if we will exceed mount's limits.  The possible number is 0, 1 and 2.
     nErr = sendCommand(":QAP#", szResp, 1);
-    if(nErr)
+    if (nErr) {
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :QAP#.  nErr: %i\n", getTimestamp(), nErr);
+        fflush(Logfile);
         return nErr;
+    }
     m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
 
-    if (m_nCacheLimitStatus==LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
+    if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Warning: Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s exceed mechanical limits, altitude limits or meridian flip limits.\n", getTimestamp(), szCmdRa, szCmdDec);
@@ -1323,7 +1352,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     }
 #endif
 
-    if (m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
+    if (m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
         // :MS1#   slew to normal position
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
@@ -1333,7 +1362,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
             fflush(Logfile);
         }
 #endif
-    } else if (m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
+    } else if (m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // :MS2#   slew to counterweight up position I think
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS2#", szResp, 1);
@@ -1344,18 +1373,24 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         }
 #endif
     } else if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE !!!  \n", getTimestamp());
+            fflush(Logfile);
+        }
+#endif
         return ERR_LIMITSEXCEEDED;  // redundant but just in case
     }
 
     if (nErr) {
         return nErr;
-    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
+    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount even though it told me it only had one position to go to.  Gettn out of dodge.\n", getTimestamp());
         fflush(Logfile);
 #endif
         return ERR_LIMITSEXCEEDED;  // regular slew to a place that is bad for mount
-    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus==NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
+    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // attempt was made to slew to counterweight up position, and mount said NO.. so attempt normal
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
@@ -1363,7 +1398,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
             fflush(Logfile);
         }
 #endif
-        m_nCacheLimitStatus=NO_ISSUE_SLEW_TRACK_ONE_OPTION;  // act as if we had only one option
+        m_nCacheLimitStatus = NO_ISSUE_SLEW_TRACK_ONE_OPTION;  // act as if we had only one option
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
         if (nErr) {
