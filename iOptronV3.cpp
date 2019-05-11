@@ -1305,7 +1305,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         return ERR_ABORTEDPROCESS;
     }
 
-    dRaArcSec = (dRaInDecimalHours * 60 * 60) / 0.01;  // actually hundreths of arc sec
+    dRaArcSec = ((dRaInDecimalHours/24*360) * 60 * 60) / 0.01;  // actually hundreths of arc sec
     // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000].
     // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
