@@ -466,7 +466,7 @@ int CiOptron::getRaAndDec(double &dRaInDecimalHours, double &dDecInDecimalDegree
     memcpy(szRa, szResp+9, 9);
     nRa = atoi(szRa);
     nDec = atoi(szDec);
-    dRaInDecimalHours = (nRa*0.01)/ 60 /60 ;
+    dRaInDecimalHours = (nRa*0.01*24/360)/ 60 /60 ;
     dDecInDecimalDegrees = (nDec*0.01)/ 60 /60 ;
 
     m_dRa = dRaInDecimalHours;
@@ -518,7 +518,7 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // Valid data range is [0, 129,600,000].
     // Note: The resolution is 0.01 arc-second.
     // TSX provides RA and DEC in degrees with a decimal
-    nRa = int((dRaInDecimalHours*60*60)/0.01);
+    nRa = int(((dRaInDecimalHours/24*360) * 60 * 60) / 0.01);  // actually hundreths of arc sec
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -1583,7 +1583,8 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
 
     // set az park position :  “:SPATTTTTTTTT#”
     // convert dAz to arcsec then to 0.01 arcsec
-    dAzArcSec = (dAz * 60 * 60) / 0.01;
+//    dAzArcSec = (dAz * 60 * 60) / 0.01;   wrong!
+    dAzArcSec = ((dAz/24*360) * 60 * 60) / 0.01;  // actually hundreths of arc sec
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Az to : %d\n", getTimestamp(), int(dAzArcSec));
     fflush(Logfile);
@@ -1645,7 +1646,8 @@ int CiOptron::getParkPosition(double &dAz, double &dAlt)
     memcpy(szParkAz, szResp+8, 9); // The last 9 digits indicate the azimuth of parking position. Valid data range is [0, 129,600,000]. Note: The resolution is 0.01 arc-second.
     nAzArcSec = atoi(szParkAz);
     nAltArcSec = atoi(szParkAlt);
-    dAz = (nAzArcSec*0.01)/ 60 /60 ;
+//    dAz = (nAzArcSec*0.01)/ 60 /60 ;   az calculated the same??
+    dAz = (nAzArcSec*0.01*24/360)/ 60 /60 ;
     dAlt = (nAltArcSec*0.01)/ 60 /60 ;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
