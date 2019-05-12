@@ -9,7 +9,9 @@ CiOptron::CiOptron() {
     m_nGPSStatus = GPS_BROKE_OR_MISSING;  // unread to start (stating broke or missing)
     m_nTimeSource = TIME_SRC_UNKNOWN;  // unread to start
 
+#if defined IOPTRON_DEBUG
     Logfile = NULL;
+#endif
     m_dRa = 0.0;
     m_dDec = 0.0;
     m_nDegreesPastMeridian = 0;
@@ -1290,8 +1292,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 
     nErr = isGPSGood(bGPSGood);
     if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error calling isGPSGood.  nErr: %i\n", getTimestamp(), nErr);
         fflush(Logfile);
+#endif
         return nErr;
     }
 
@@ -1311,8 +1315,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
     nErr = sendCommand(szCmdRa, szResp, 1);
     if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdRa, nErr);
         fflush(Logfile);
+#endif
         return nErr;
     }
 
@@ -1322,8 +1328,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
     nErr = sendCommand(szCmdDec, szResp, 1);
     if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdDec, nErr);
         fflush(Logfile);
+#endif
         return nErr;
     }
 
@@ -1334,8 +1342,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // Checking if we will exceed mount's limits.  The possible number is 0, 1 and 2.
     nErr = sendCommand(":QAP#", szResp, 1);
     if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :QAP#.  nErr: %i\n", getTimestamp(), nErr);
         fflush(Logfile);
+#endif
         return nErr;
     }
     m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
