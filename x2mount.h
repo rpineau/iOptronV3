@@ -28,7 +28,7 @@
 // Include files for iOptron mount
 #include "iOptronV3.h"
 
-#define DRIVER_VERSION 1.05
+#define DRIVER_VERSION 1.06
 
 #define PARENT_KEY			"iOptronV3"
 #define CHILD_KEY_PORT_NAME "PortName"
