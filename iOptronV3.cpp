@@ -468,8 +468,8 @@ int CiOptron::getRaAndDec(double &dRaInDecimalHours, double &dDecInDecimalDegree
     memcpy(szRa, szResp+9, 9);
     nRa = atoi(szRa);
     nDec = atoi(szDec);
-    dRaInDecimalHours = (nRa*0.01*24/360)/ 60 /60 ;
-    dDecInDecimalDegrees = (nDec*0.01)/ 60 /60 ;
+    dRaInDecimalHours = (nRa*0.01 * 24.0 / 360.0)/ 60.0 /60.0 ;
+    dDecInDecimalDegrees = (nDec * 0.01)/ 60.0 /60.0 ;
 
     m_dRa = dRaInDecimalHours;
     m_dDec = dDecInDecimalDegrees;
@@ -520,7 +520,7 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // Valid data range is [0, 129,600,000].
     // Note: The resolution is 0.01 arc-second.
     // TSX provides RA and DEC in degrees with a decimal
-    nRa = int(((dRaInDecimalHours/24*360) * 60 * 60) / 0.01);  // actually hundreths of arc sec
+    nRa = int(((dRaInDecimalHours / 24.0 * 360.0) * 60.0 * 60.0) / 0.01);  // actually hundreths of arc sec
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -1309,7 +1309,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         return ERR_ABORTEDPROCESS;
     }
 
-    dRaArcSec = ((dRaInDecimalHours/24*360) * 60 * 60) / 0.01;  // actually hundreths of arc sec
+    dRaArcSec = ((dRaInDecimalHours / 24.0 * 360.0) * 60.0 * 60.0) / 0.01;  // actually hundreths of arc sec
     // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000].
     // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
@@ -1322,7 +1322,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         return nErr;
     }
 
-    dDecArcSec = (dDecInDecimalDegrees * 60 * 60) / 0.01; // actually hundreths of arc sec - converts same way
+    dDecArcSec = (dDecInDecimalDegrees * 60.0 * 60.0) / 0.01; // actually hundreths of arc sec - converts same way
     // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
     // Note: The resolution is 0.01 arc-second.
     snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
@@ -1594,7 +1594,7 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
     // set az park position :  “:SPATTTTTTTTT#”
     // convert dAz to arcsec then to 0.01 arcsec
 //    dAzArcSec = (dAz * 60 * 60) / 0.01;   wrong!
-    dAzArcSec = ((dAz/24*360) * 60 * 60) / 0.01;  // actually hundreths of arc sec
+    dAzArcSec = ((dAz / 24.0 * 360.0) * 60.0 * 60.0) / 0.01;  // actually hundreths of arc sec
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Az to : %d\n", getTimestamp(), int(dAzArcSec));
     fflush(Logfile);
@@ -1606,7 +1606,7 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
 
     // set Alt park postion : “:SPHTTTTTTTT#”
     // convert dAlt to arcsec then to 0.01 arcsec
-    dAltArcSec = (dAlt * 60 * 60) / 0.01;
+    dAltArcSec = (dAlt * 60.0 * 60.0) / 0.01;
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Alt to : %d\n", getTimestamp(), int(dAltArcSec));
@@ -1657,8 +1657,8 @@ int CiOptron::getParkPosition(double &dAz, double &dAlt)
     nAzArcSec = atoi(szParkAz);
     nAltArcSec = atoi(szParkAlt);
 //    dAz = (nAzArcSec*0.01)/ 60 /60 ;   az calculated the same??
-    dAz = (nAzArcSec*0.01*24/360)/ 60 /60 ;
-    dAlt = (nAltArcSec*0.01)/ 60 /60 ;
+    dAz = (nAzArcSec * 0.01 * 24.0 / 360.0)/ 60.0 /60.0 ;
+    dAlt = (nAltArcSec * 0.01)/ 60.0 /60.0 ;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
@@ -1822,7 +1822,7 @@ int CiOptron::getInfoAndSettings()
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS lat is : %f, GPS long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", getTimestamp(), (m_fLat*0.01)/ 60 /60 , (m_fLong*0.01)/ 60 /60 , m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
+        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS lat is : %f, GPS long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", getTimestamp(), (m_fLat*0.01)/ 60.0 /60.0 , (m_fLong*0.01)/ 60.0 /60.0 , m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
         fflush(Logfile);
     }
 #endif
