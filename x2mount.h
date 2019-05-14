@@ -32,6 +32,7 @@
 
 #define PARENT_KEY			"iOptronV3"
 #define CHILD_KEY_PORT_NAME "PortName"
+#define LOCATION_TIME		"SetLocationAndTimeData"
 #define MAX_PORT_NAME_SIZE 120
 
 
@@ -219,6 +220,8 @@ private:
 	int m_CurrentRateIndex;
 
     int m_nCurrentDialog;
+
+	bool	m_bSetlocationAndTimeData;
 
     int doConfirm(bool &bPressedOK, const char *szText);
 
