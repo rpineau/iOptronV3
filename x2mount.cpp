@@ -257,7 +257,9 @@ int X2Mount::execModalSettingsDialog(void)
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
-        dx->setEnabled("pushButton_2", true);  // parked button
+		dx->setEnabled("pushButton", true);  // set location and timezone
+		dx->setEnabled("pushButton_6", true);  // set time from TSX->mount
+		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
         dx->setEnabled("pushButton_5", true); // goto flats position button
@@ -293,6 +295,8 @@ int X2Mount::execModalSettingsDialog(void)
     else {
         dx->setEnabled("parkAz", false);
         dx->setEnabled("parkAlt", false);
+		dx->setEnabled("pushButton", false);  // set location and timezone
+		dx->setEnabled("pushButton_6", false);  // set time from TSX->mount
         dx->setEnabled("pushButton_2", false); // parked button
         dx->setEnabled("pushButton_3", false); // goto zero button
         dx->setEnabled("pushButton_4", false); // find zero button
@@ -484,7 +488,35 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
         fflush(LogFile);
     }
 #endif
-    if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
+	if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set location and timezone
+#ifdef IOPTRON_X2_DEBUG
+		if (LogFile) {
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_2_clicked (_2 means parked)\n", timestamp);
+			fflush(LogFile);
+		}
+#endif
+		doConfirm(bOk, "Are you sure you want to send the loczation and timezone from TheSkyX to the mount ?");
+		if(bOk) {
+		}
+	}
+	else if (!strcmp(pszEvent, "on_pushButton_6_clicked")) { //Set the time and date from TSX to the mount
+#ifdef IOPTRON_X2_DEBUG
+		if (LogFile) {
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_2_clicked (_2 means parked)\n", timestamp);
+			fflush(LogFile);
+		}
+#endif
+		doConfirm(bOk, "Are you sure you want to send the time and date from TheSkyX to the mount ?");
+		if(bOk) {
+		}
+	}
+	else if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
 #ifdef IOPTRON_X2_DEBUG
         if (LogFile) {
             ltime = time(NULL);
