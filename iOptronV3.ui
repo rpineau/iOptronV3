@@ -71,7 +71,7 @@
       <property name="geometry">
        <rect>
         <x>128</x>
-        <y>2</y>
+        <y>0</y>
         <width>200</width>
         <height>20</height>
        </rect>
@@ -83,21 +83,24 @@
      <widget class="QLabel" name="label_ss">
       <property name="geometry">
        <rect>
-        <x>60</x>
-        <y>30</y>
+        <x>40</x>
+        <y>24</y>
         <width>121</width>
         <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>System Status:</string>
+       <string>System Status :</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
      <widget class="QLabel" name="label_actual_sys_stat">
       <property name="geometry">
        <rect>
         <x>180</x>
-        <y>30</y>
+        <y>24</y>
         <width>251</width>
         <height>16</height>
        </rect>
@@ -110,20 +113,23 @@
       <property name="geometry">
        <rect>
         <x>60</x>
-        <y>56</y>
+        <y>48</y>
         <width>101</width>
         <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>Tracking Rate:</string>
+       <string>Tracking Rate :</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
      <widget class="QLabel" name="label_actual_track_rate">
       <property name="geometry">
        <rect>
         <x>180</x>
-        <y>56</y>
+        <y>48</y>
         <width>251</width>
         <height>16</height>
        </rect>
@@ -136,9 +142,9 @@
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>88</y>
+        <y>72</y>
         <width>432</width>
-        <height>248</height>
+        <height>272</height>
        </rect>
       </property>
       <property name="title">
@@ -355,12 +361,25 @@ p, li { white-space: pre-wrap; }
         <string>Set</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox">
+       <property name="geometry">
+        <rect>
+         <x>16</x>
+         <y>240</y>
+         <width>384</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set mount location, timezone, date and time on connect</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>352</y>
+        <y>360</y>
         <width>424</width>
         <height>101</height>
        </rect>
@@ -463,9 +482,9 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>8</x>
-        <y>464</y>
+        <y>472</y>
         <width>424</width>
-        <height>200</height>
+        <height>192</height>
        </rect>
       </property>
       <property name="windowTitle">
@@ -547,7 +566,7 @@ p, li { white-space: pre-wrap; }
        <property name="geometry">
         <rect>
          <x>16</x>
-         <y>160</y>
+         <y>152</y>
          <width>151</width>
          <height>24</height>
         </rect>
@@ -560,7 +579,7 @@ p, li { white-space: pre-wrap; }
        <property name="geometry">
         <rect>
          <x>184</x>
-         <y>160</y>
+         <y>152</y>
          <width>216</width>
          <height>24</height>
         </rect>

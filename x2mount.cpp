@@ -45,6 +45,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	m_bSynced = false;
 	m_bParked = false;
     m_bLinked = false;
+	m_bSetlocationAndTimeData = false;
 
     m_iOptronV3.setSerxPointer(m_pSerX);
     m_iOptronV3.setTSX(m_pTheSkyXForMounts);
@@ -56,6 +57,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	// Read the current stored values for the settings
 	if (m_pIniUtil)
 	{
+		m_bSetlocationAndTimeData = (m_pIniUtil->readInt(PARENT_KEY, LOCATION_TIME, 0) == 0?false:true);
 	}
 
 }
@@ -259,6 +261,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAlt", true);
 		dx->setEnabled("pushButton", true);  // set location and timezone
 		dx->setEnabled("pushButton_6", true);  // set time from TSX->mount
+		dx->setEnabled("checkBox", true);		// set time and location data on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
@@ -297,6 +300,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAlt", false);
 		dx->setEnabled("pushButton", false);  // set location and timezone
 		dx->setEnabled("pushButton_6", false);  // set time from TSX->mount
+		dx->setEnabled("checkBox", false);		// set time and location data on connect
         dx->setEnabled("pushButton_2", false); // parked button
         dx->setEnabled("pushButton_3", false); // goto zero button
         dx->setEnabled("pushButton_4", false); // find zero button
@@ -365,6 +369,10 @@ int X2Mount::execModalSettingsDialog(void)
                 // change to standard
                 m_iOptronV3.setDST(false);
             }
+			m_bSetlocationAndTimeData = (dx->isChecked("checkBox") == 0?false:true);
+			if(m_pIniUtil){
+				m_pIniUtil->writeInt(PARENT_KEY, LOCATION_TIME, m_bSetlocationAndTimeData?1:0);
+			}
         }
 	}
 	return nErr;
@@ -498,8 +506,14 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 			fflush(LogFile);
 		}
 #endif
-		doConfirm(bOk, "Are you sure you want to send the loczation and timezone from TheSkyX to the mount ?");
+		doConfirm(bOk, "Are you sure you want to send the location and timezone from TheSkyX to the mount ?");
 		if(bOk) {
+			// nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
+			// nErr |= m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
+			if(nErr) {
+				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location and timezone : %d", nErr);
+				uiex->messageBox("Error",szTmpBuf);
+			}
 		}
 	}
 	else if (!strcmp(pszEvent, "on_pushButton_6_clicked")) { //Set the time and date from TSX to the mount
@@ -514,6 +528,11 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 #endif
 		doConfirm(bOk, "Are you sure you want to send the time and date from TheSkyX to the mount ?");
 		if(bOk) {
+			// nErr = m_iOptronV3.setTiemAndDate();
+			if(nErr) {
+				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting date and time : %d", nErr);
+				uiex->messageBox("Error",szTmpBuf);
+			}
 		}
 	}
 	else if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
@@ -619,6 +638,24 @@ int X2Mount::establishLink(void)
     else {
         m_bLinked = true;
     }
+
+	if(m_bSetlocationAndTimeData) {
+		// nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
+		if(nErr) {
+			m_bLinked = false;
+			return nErr;
+		}
+		// nErr = m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
+		if(nErr) {
+			m_bLinked = false;
+			return nErr;
+		}
+		// nErr = m_iOptronV3.setTiemAndDate();
+		if(nErr) {
+			m_bLinked = false;
+			return nErr;
+		}
+	}
     return nErr;
 }
 
