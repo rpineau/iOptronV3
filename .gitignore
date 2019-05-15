@@ -2,6 +2,7 @@
 *.xcworkspace
 .DS_Store
 build
+*.exe
 *.opensdf
 *.sdf
 .vs
