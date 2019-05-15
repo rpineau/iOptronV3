@@ -508,7 +508,8 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 #endif
 		doConfirm(bOk, "Are you sure you want to send the location and timezone from TheSkyX to the mount ?");
 		if(bOk) {
-			// nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
+			// TSX longitude is + going west and - going east, so passing the opposite
+			// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
 			// nErr |= m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
 			if(nErr) {
 				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location and timezone : %d", nErr);
@@ -640,7 +641,8 @@ int X2Mount::establishLink(void)
     }
 
 	if(m_bSetlocationAndTimeData) {
-		// nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
+		// TSX longitude is + going west and - going east, so passing the opposite
+		// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
 		if(nErr) {
 			m_bLinked = false;
 			return nErr;
