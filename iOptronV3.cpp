@@ -1348,7 +1348,8 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 #endif
         return nErr;
     }
-    m_nCacheLimitStatus = atoi(szResp[0]);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
+    szResp[1] = 0;
+    m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
 
     if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
