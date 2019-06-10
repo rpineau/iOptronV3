@@ -1340,7 +1340,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     //This command queries the number of available position for most recently defined right ascension and declination coordinates
     // which not exceed the mechanical limits, altitude limits and meridian flip limits (including normal position and counterweight up position).
     // Checking if we will exceed mount's limits.  The possible number is 0, 1 and 2.
-    nErr = sendCommand(":QAP#", szResp, 1);
+    nErr = sendCommand(":QAP#", szResp, 2);
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :QAP#.  nErr: %i\n", getTimestamp(), nErr);
@@ -1348,7 +1348,7 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 #endif
         return nErr;
     }
-    m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
+    m_nCacheLimitStatus = atoi(szResp[0]);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
 
     if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
