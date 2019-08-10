@@ -18,3 +18,4 @@ Release
 .idea/
 .idea/codeStyles/Project.xml
 .idea/iOptronV3.iml
+*.user
