@@ -313,7 +313,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
        <property name="text">
-        <string>Sync location and timezone from TheSkyX :</string>
+        <string>Sync location from TheSkyX :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -335,7 +335,7 @@ p, li { white-space: pre-wrap; }
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushButton_7">
        <property name="geometry">
         <rect>
          <x>296</x>
@@ -361,17 +361,17 @@ p, li { white-space: pre-wrap; }
         <string>Set</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="autoDateTime">
        <property name="geometry">
         <rect>
-         <x>16</x>
+         <x>15</x>
          <y>240</y>
-         <width>384</width>
+         <width>400</width>
          <height>24</height>
         </rect>
        </property>
        <property name="text">
-        <string>Set mount location, timezone, date and time on connect</string>
+        <string>Set timezone, UTC Offset, date/time on connect from TheSkyX</string>
        </property>
       </widget>
      </widget>
