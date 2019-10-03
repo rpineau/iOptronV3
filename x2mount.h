@@ -32,7 +32,7 @@
 
 #define PARENT_KEY			"iOptronV3"
 #define CHILD_KEY_PORT_NAME "PortName"
-#define LOCATION_TIME		"SetLocationAndTimeData"
+#define AUTO_DATETIME		"SetDateTimeData"
 #define MAX_PORT_NAME_SIZE 120
 
 
@@ -221,7 +221,8 @@ private:
 
     int m_nCurrentDialog;
 
-	bool	m_bSetlocationAndTimeData;
+	bool	m_bSetAutoTimeData;
+	int inDaylightTime(bool &bInDST);
 
     int doConfirm(bool &bPressedOK, const char *szText);
 

@@ -57,6 +57,8 @@ enum iOptronCounterWeightStatus {COUNTER_WEIGHT_UP=0, COUNTER_WEIGHT_NORMAL};
 
 enum iSlewTrackLimitsStatus {LIMITS_EXCEEDED_OR_BELOW_ALTITUDE=0, NO_ISSUE_SLEW_TRACK_ONE_OPTION, NO_ISSUE_SLEW_TRACK_TWO_OPTIONS, NO_STATUS};
 
+enum iSlewResponse {SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE=0, SLEW_ACCEPTED};
+
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
@@ -134,6 +136,7 @@ public:
     int setUtcOffset(char *pszUtcOffsetInMins);
     int getDST(bool &bDaylight);
     int setDST(bool bDaylight);
+    int setTimeAndDate(double julianDateOfUTCTimeIncludingMillis);
 
 private:
 

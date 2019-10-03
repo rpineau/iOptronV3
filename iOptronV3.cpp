@@ -738,7 +738,6 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    char szRa[SERIAL_BUFFER_SIZE];
     double fRa = m_fCustomRaMultiplier;  // initialize with cached value
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -1005,7 +1004,7 @@ int CiOptron::getUtcOffset(char *pszUtcOffsetInMins)
     nErr = sendCommand(":GUT#", szResp, 19);
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  nErr = %i, Result: %s\n", getTimestamp(), nErr, pszUtcOffsetInMins);
+        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  nErr = %i, Result: %s\n", getTimestamp(), nErr, szResp);
         fflush(Logfile);
     }
 #endif
@@ -1130,6 +1129,51 @@ int CiOptron::setDST(bool bDaylight)
 #endif
 
     return nErr;
+}
+
+int CiOptron::setTimeAndDate(double dJulianDateRightNow)
+{
+    int nErr = IOPTRON_OK;
+    double dMountsDesiredJulianDateOffset;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szCmd[SERIAL_BUFFER_SIZE];
+
+//    Command: “:SUTXXXXXXXXXXXXX#”
+//    Response: “1”
+//    This command sets the current UTC Time. The number equals (JD(current UTC Time) – J2000) * 8.64e+7.
+//    Note: JD(current UTC time) means Julian Date of current UTC time. The resolution is 1 millisecond.
+
+    dMountsDesiredJulianDateOffset = (dJulianDateRightNow-2451545.0L)*86400000.0L;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setTimeAndDate] calculated float: %f as the JD time offset\n", getTimestamp(), dMountsDesiredJulianDateOffset);
+        fflush(Logfile);
+    }
+#endif
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SUT%013.0f#", dMountsDesiredJulianDateOffset);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setTimeAndDate] will send command %s to mount\n", getTimestamp(), szCmd);
+        fflush(Logfile);
+    }
+#endif
+
+    nErr = sendCommand(szCmd, szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setTimeAndDate] done, response is %s nErr = %i\n", getTimestamp(), szResp, nErr);
+        fflush(Logfile);
+    }
+#endif
+
+    if (atoi(szResp) != 1) {
+        return 1; // meaning error
+    } else {
+        return nErr;  // return any communication error or 0 if none
+    }
+
 }
 
 
@@ -1339,95 +1383,96 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     // :QAP#  Response: “0”, “1”, “2”
     //This command queries the number of available position for most recently defined right ascension and declination coordinates
     // which not exceed the mechanical limits, altitude limits and meridian flip limits (including normal position and counterweight up position).
-    // Checking if we will exceed mount's limits.  The possible number is 0, 1 and 2.
-    nErr = sendCommand(":QAP#", szResp, 2);
-    if (nErr) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :QAP#.  nErr: %i\n", getTimestamp(), nErr);
-        fflush(Logfile);
-#endif
-        return nErr;
-    }
-    szResp[1] = 0;
-    m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
+    // Checking if we will exceed mount's limits.  The possible response is  0#, 1# and 2#.
+//    nErr = sendCommand(":QAP#", szResp, 2);
+//    if (nErr) {
+//#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+//        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :QAP#.  nErr: %i\n", getTimestamp(), nErr);
+//        fflush(Logfile);
+//#endif
+//        return nErr;
+//    }
+//    szResp[1] = 0;
+//    m_nCacheLimitStatus = atoi(szResp);   // again 0 = problem, 1=ok with 1 position to slew to, 2=ok with two positions to slew to
+//
+//    if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
+//#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+//        if (Logfile) {
+//            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Warning: Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s exceed mechanical limits, altitude limits or meridian flip limits.\n", getTimestamp(), szCmdRa, szCmdDec);
+//            fflush(Logfile);
+//        }
+//#endif
+//        return ERR_LIMITSEXCEEDED;
+//    }
 
-    if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        if (Logfile) {
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Warning: Commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s exceed mechanical limits, altitude limits or meridian flip limits.\n", getTimestamp(), szCmdRa, szCmdDec);
-            fflush(Logfile);
-        }
-#endif
-        return ERR_LIMITSEXCEEDED;
-    }
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Slewing to 1 of %i position(s) using commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s\n", getTimestamp(), m_nCacheLimitStatus, szCmdRa, szCmdDec);
-        fflush(Logfile);
-    }
-#endif
-
+//#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+//    if (Logfile) {
+//        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Slewing to 1 of %i position(s) using commands:  Ra [0, 129,600,000]: %s and Dec [-32,400,000, +32,400,000]: %s\n", getTimestamp(), m_nCacheLimitStatus, szCmdRa, szCmdDec);
+//        fflush(Logfile);
+//    }
+//#endif
+    m_nCacheLimitStatus = NO_ISSUE_SLEW_TRACK_ONE_OPTION;
     if (m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
         // :MS1#   slew to normal position
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (nErr) {
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS1.  nErr: %i\n", getTimestamp(), nErr);
             fflush(Logfile);
         }
-#endif
+        #endif
     } else if (m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // :MS2#   slew to counterweight up position I think
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS2#", szResp, 1);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (nErr) {
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2.  nErr: %i\n", getTimestamp(), nErr);
             fflush(Logfile);
         }
-#endif
+        #endif
     } else if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE !!!  \n", getTimestamp());
             fflush(Logfile);
         }
-#endif
+        #endif
         return ERR_LIMITSEXCEEDED;  // redundant but just in case
     }
 
     if (nErr) {
         return nErr;
-    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount even though it told me it only had one position to go to.  Gettn out of dodge.\n", getTimestamp());
+    } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        //        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount even though it told me it only had one position to go to.  Gettn out of dodge.\n", getTimestamp());
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount likely due to limit issues.  Gettn out of dodge.\n", getTimestamp());
         fflush(Logfile);
-#endif
+        #endif
         return ERR_LIMITSEXCEEDED;  // regular slew to a place that is bad for mount
-    } else if (atoi(szResp) == 0 && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
+    } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
         // attempt was made to slew to counterweight up position, and mount said NO.. so attempt normal
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Slewing to counterweight up position was rejected by mount.  Slewing to normal position.\n", getTimestamp());
             fflush(Logfile);
         }
-#endif
+        #endif
         m_nCacheLimitStatus = NO_ISSUE_SLEW_TRACK_ONE_OPTION;  // act as if we had only one option
         memset(szResp, 0, SERIAL_BUFFER_SIZE);  // clear response buffer
         nErr = sendCommand(":MS1#", szResp, 1);
         if (nErr) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+            #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2 then :MS1  nErr: %i\n", getTimestamp(), nErr);
             fflush(Logfile);
-#endif
+            #endif
             return nErr;
-        } else if (atoi(szResp) == 0) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE) {
+            #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
             fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount after attempting to slew to counterweight up option.  (:MS2 then :MS1).  Gettn out of dodge.\n", getTimestamp());
             fflush(Logfile);
-#endif
+            #endif
             return ERR_LIMITSEXCEEDED;
         } else {
             m_nStatus = SLEWING;

@@ -45,7 +45,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	m_bSynced = false;
 	m_bParked = false;
     m_bLinked = false;
-	m_bSetlocationAndTimeData = false;
+	m_bSetAutoTimeData = false;
 
     m_iOptronV3.setSerxPointer(m_pSerX);
     m_iOptronV3.setTSX(m_pTheSkyXForMounts);
@@ -57,7 +57,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	// Read the current stored values for the settings
 	if (m_pIniUtil)
 	{
-		m_bSetlocationAndTimeData = (m_pIniUtil->readInt(PARENT_KEY, LOCATION_TIME, 0) == 0?false:true);
+		m_bSetAutoTimeData = (m_pIniUtil->readInt(PARENT_KEY, AUTO_DATETIME, 0) == 0?false:true);
 	}
 
 }
@@ -240,6 +240,7 @@ int X2Mount::execModalSettingsDialog(void)
     bool bAtZero = false;
     bool bAtParked = false;
     double dParkAz, dParkAlt;
+    int iAutoDateTime;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -256,12 +257,15 @@ int X2Mount::execModalSettingsDialog(void)
     X2MutexLocker ml(GetMutex());
 
 	// Set values in the userinterface
+    iAutoDateTime = m_pIniUtil->readInt(PARENT_KEY, AUTO_DATETIME, 0);
+    m_bSetAutoTimeData = iAutoDateTime==1?true:false;
+
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
-		dx->setEnabled("pushButton", true);  // set location and timezone
-		dx->setEnabled("pushButton_6", true);  // set time from TSX->mount
-		dx->setEnabled("checkBox", true);		// set time and location data on connect
+		dx->setEnabled("pushButton_7", false);  // set location from TSX->mount
+		dx->setEnabled("pushButton_6", true);  // set time/date/timezone from TSX->mount
+		dx->setEnabled("autoDateTime", true);		// set date/time on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
@@ -292,15 +296,16 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("label_actual_sys_stat", szSystemStatus);
         m_iOptronV3.getTrackingStatusPassive(szTrackingRate, SERIAL_BUFFER_SIZE);
         dx->setText("label_actual_track_rate", szTrackingRate);
+        dx->setChecked("autoDateTime", iAutoDateTime);
 
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {
         dx->setEnabled("parkAz", false);
         dx->setEnabled("parkAlt", false);
-		dx->setEnabled("pushButton", false);  // set location and timezone
+		dx->setEnabled("pushButton_7", false);  // set location and timezone from TSX->mount
 		dx->setEnabled("pushButton_6", false);  // set time from TSX->mount
-		dx->setEnabled("checkBox", false);		// set time and location data on connect
+		dx->setEnabled("autoDateTime", false);	// set time and location data on connect
         dx->setEnabled("pushButton_2", false); // parked button
         dx->setEnabled("pushButton_3", false); // goto zero button
         dx->setEnabled("pushButton_4", false); // find zero button
@@ -308,6 +313,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("lineEdit_utc", false); // utc minutes offset
         dx->setEnabled("comboBox_dst", false); // daylight or not
         dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
+        dx->setChecked("autoDateTime", iAutoDateTime); // set this anyway to indicate our value even if mount isn't connected
     }
 
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
@@ -369,10 +375,20 @@ int X2Mount::execModalSettingsDialog(void)
                 // change to standard
                 m_iOptronV3.setDST(false);
             }
-			m_bSetlocationAndTimeData = (dx->isChecked("checkBox") == 0?false:true);
-			if(m_pIniUtil){
-				m_pIniUtil->writeInt(PARENT_KEY, LOCATION_TIME, m_bSetlocationAndTimeData?1:0);
-			}
+        }
+
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: dst value set.  Value read is %i\n", timestamp, dx->currentIndex("comboBox_dst"));
+            fflush(LogFile);
+        }
+#endif
+        m_bSetAutoTimeData = (dx->isChecked("autoDateTime") == 0?false:true);
+        if(m_pIniUtil){
+            m_pIniUtil->writeInt(PARENT_KEY, AUTO_DATETIME, m_bSetAutoTimeData?1:0);
         }
 	}
 	return nErr;
@@ -471,9 +487,10 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
     int nErr = SB_OK;
-    double dParkAz, dParkAlt;
+    double dParkAz, dParkAlt, dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bOk = false;
+    bool bInDST = true;  // most of the time its summer when we observe the heavens
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -496,44 +513,99 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
         fflush(LogFile);
     }
 #endif
-	if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set location and timezone
+	if (!strcmp(pszEvent, "on_pushButton_7_clicked")) { //Set location from TSX --> mount
 #ifdef IOPTRON_X2_DEBUG
 		if (LogFile) {
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_2_clicked (_2 means parked)\n", timestamp);
+			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_7_clicked (_7 means set location from TSX)\n", timestamp);
 			fflush(LogFile);
 		}
 #endif
-		doConfirm(bOk, "Are you sure you want to send the location and timezone from TheSkyX to the mount ?");
+		doConfirm(bOk, "Are you sure you want to send the location from TheSkyX to the mount?  This is generally not recommended as you should merely wait for the GPS to resolve this more accurately.  GPS on mount usually takes about 8-10 minutes and antenna needs to be connected.");
 		if(bOk) {
 			// TSX longitude is + going west and - going east, so passing the opposite
 			// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
 			// nErr |= m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
 			if(nErr) {
-				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location and timezone : %d", nErr);
+				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location: %d", nErr);
 				uiex->messageBox("Error",szTmpBuf);
 			}
 		}
 	}
-	else if (!strcmp(pszEvent, "on_pushButton_6_clicked")) { //Set the time and date from TSX to the mount
+	else if (!strcmp(pszEvent, "on_pushButton_6_clicked")) { //Set the time, timezone, and date from TSX --> mount
 #ifdef IOPTRON_X2_DEBUG
 		if (LogFile) {
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_2_clicked (_2 means parked)\n", timestamp);
+			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_6_clicked (_6 means set timezone, utc, time and date)\n", timestamp);
 			fflush(LogFile);
 		}
 #endif
-		doConfirm(bOk, "Are you sure you want to send the time and date from TheSkyX to the mount ?");
+		doConfirm(bOk, "Are you sure you want to send the time, timezone, UTC offset, and date from TheSkyX to the mount ?");
 		if(bOk) {
-			// nErr = m_iOptronV3.setTiemAndDate();
-			if(nErr) {
-				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting date and time : %d", nErr);
-				uiex->messageBox("Error",szTmpBuf);
-			}
+
+            nErr = inDaylightTime(bInDST);
+            if(nErr) {
+                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error calculating DST from TheSkyX : %d", nErr);
+                uiex->messageBox("Error",szTmpBuf);
+            } else {
+                //
+                // set DST on mount
+                nErr = m_iOptronV3.setDST(bInDST);
+                if (nErr) {
+                    snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting DST on mount : %d", nErr);
+                    uiex->messageBox("Error",szTmpBuf);
+                } else {
+                    //
+                    // next try setting UTC offset
+                    //
+                    dTimezoneFromTSX = m_pTheSkyXForMounts->timeZone();
+                    dUTCOffsetInMins = dTimezoneFromTSX * 60;
+                    snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "%+03.0f", dUTCOffsetInMins);
+
+                    #ifdef IOPTRON_X2_DEBUG
+                    if (LogFile) {
+                        ltime = time(NULL);
+                        timestamp = asctime(localtime(&ltime));
+                        timestamp[strlen(timestamp) - 1] = 0;
+                        fprintf(LogFile,
+                                "[%s] X2Mount::doMainDialogEvents::on_pushButton_6_clicked (_6 means set timezone, utc, time and date) calculated UTC offset as %g and the string we're sending to the mount: %s\n",
+                                timestamp, dUTCOffsetInMins, szTmpBuf);
+                        fflush(LogFile);
+                    }
+                    #endif
+
+                    nErr = m_iOptronV3.setUtcOffset(szTmpBuf);
+                    if (nErr) {
+                        snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error setting UTC offset : %d.  DST was set successfully.", nErr);
+                        uiex->messageBox("Error", szTmpBuf);
+                    } else {
+                        //
+                        // next, set time/date on mount to TSX's time/date which I assume is NTP time for most people
+                        //
+                         #ifdef IOPTRON_X2_DEBUG
+                         if (LogFile) {
+                            ltime = time(NULL);
+                            timestamp = asctime(localtime(&ltime));
+                            timestamp[strlen(timestamp) - 1] = 0;
+                            fprintf(LogFile,
+                                    "[%s] X2Mount::doMainDialogEvents::on_pushButton_6_clicked (_6 means set timezone, utc, time and date) TSX Julian time came back as %g \n",
+                                    timestamp, m_pTheSkyXForMounts->julianDate());
+                            fflush(LogFile);
+                         }
+                         #endif
+                         nErr = m_iOptronV3.setTimeAndDate(m_pTheSkyXForMounts->julianDate());
+                        if (nErr) {
+                            snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error setting date/time on mount : %d.  Both UTC offset and DST were indeed successfully set.", nErr);
+                            uiex->messageBox("Error", szTmpBuf);
+                        }
+                    }
+                }
+
+            }
 		}
 	}
 	else if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Set the park position
@@ -625,7 +697,11 @@ int X2Mount::doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* psz
 #pragma mark - LinkInterface
 int X2Mount::establishLink(void)
 {
-    int nErr;
+    int nErr = SB_OK;
+    double dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
+    char szTmpBuf[SERIAL_BUFFER_SIZE];
+    bool bInDST = true;  // most of the time its summer when we observe the heavens
+
     char szPort[DRIVER_MAX_STRING];
 
 	X2MutexLocker ml(GetMutex());
@@ -640,25 +716,119 @@ int X2Mount::establishLink(void)
         m_bLinked = true;
     }
 
-	if(m_bSetlocationAndTimeData) {
+	if(m_bLinked && m_bSetAutoTimeData) {
+	    // dont set location yet.. rely on GPS and someday provide alternative in case people's GPS goes bad
 		// TSX longitude is + going west and - going east, so passing the opposite
 		// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
-		if(nErr) {
-			m_bLinked = false;
-			return nErr;
-		}
-		// nErr = m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
-		if(nErr) {
-			m_bLinked = false;
-			return nErr;
-		}
-		// nErr = m_iOptronV3.setTiemAndDate();
-		if(nErr) {
-			m_bLinked = false;
-			return nErr;
-		}
+
+        nErr = inDaylightTime(bInDST);
+        if (!nErr) {
+            //
+            // set DST on mount
+            nErr = m_iOptronV3.setDST(bInDST);
+            if (nErr) {
+                #ifdef IOPTRON_X2_DEBUG
+                if (LogFile) {
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(LogFile,
+                            "[%s] X2Mount::establishLink Error setting DST on mount. Unlinking mount. Mount boolean sent %u\n",
+                            timestamp, bInDST?1:0);
+                    fflush(LogFile);
+                }
+                #endif
+            } else {
+                //
+                // next try setting UTC offset
+                //
+                dTimezoneFromTSX = m_pTheSkyXForMounts->timeZone();
+                dUTCOffsetInMins = dTimezoneFromTSX * 60;
+
+                memset(szTmpBuf, 0, SERIAL_BUFFER_SIZE); // clear buffer
+                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "%+03.0f#", dUTCOffsetInMins);
+
+                nErr = m_iOptronV3.setUtcOffset(szTmpBuf);
+
+                if (nErr) {
+                    #ifdef IOPTRON_X2_DEBUG
+                    if (LogFile) {
+                        ltime = time(NULL);
+                        timestamp = asctime(localtime(&ltime));
+                        timestamp[strlen(timestamp) - 1] = 0;
+                        fprintf(LogFile,
+                                "[%s] X2Mount::establishLink Error setting UTC offset : %g.  DST was set successfully. Unlinking mount.  UTC offset value sent %s\n",
+                                timestamp, dUTCOffsetInMins, szTmpBuf);
+                        fflush(LogFile);
+                    }
+                    #endif
+                } else {
+                    //
+                    // next, set time/date on mount to TSX's time/date which I assume is NTP time for most people
+                    //
+                    nErr = m_iOptronV3.setTimeAndDate(m_pTheSkyXForMounts->julianDate());
+                    if (nErr) {
+                        #ifdef IOPTRON_X2_DEBUG
+                        if (LogFile) {
+                            ltime = time(NULL);
+                            timestamp = asctime(localtime(&ltime));
+                            timestamp[strlen(timestamp) - 1] = 0;
+                            fprintf(LogFile,
+                                    "[%s] X2Mount::establishLink Error setting date/time on mount : %g.  Both UTC offset and DST were indeed successfully set.\n",
+                                    timestamp, m_pTheSkyXForMounts->julianDate());
+                            fflush(LogFile);
+                        }
+                        #endif
+                    }
+                }
+            }
+        }
+
+        if (nErr && m_bLinked) {
+            #ifdef IOPTRON_X2_DEBUG
+            if (LogFile) {
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(LogFile,
+                        "[%s] X2Mount::establishLink Error auto setting time on mount. Unlinking mount. Err was: %i\n",
+                        timestamp, nErr);
+                fflush(LogFile);
+            }
+            #endif
+            m_iOptronV3.Disconnect();
+            m_bLinked = false;
+        }
 	}
     return nErr;
+}
+
+int X2Mount::inDaylightTime(bool &bInDST)
+{
+    int nErr;
+    int iYear, iMonth, iDay, iHour, iMinute;
+    double dSecond;
+    int iDST;
+
+    nErr = m_pTheSkyXForMounts->localDateTime(iYear, iMonth, iDay, iHour, iMinute, dSecond, iDST);
+
+    if (nErr) {
+        m_bLinked = false;
+        return nErr;
+    }
+
+#ifdef IOPTRON_X2_DEBUG
+    if (LogFile) {
+        ltime = time(NULL);
+        timestamp = asctime(localtime(&ltime));
+        timestamp[strlen(timestamp) - 1] = 0;
+        fprintf(LogFile, "[%s] Call to m_pTheSkyXForMounts->localDateTime returned '%i' for DST value. \n", timestamp, iDST);
+        fflush(LogFile);
+    }
+#endif
+
+    bInDST = iDST==1?true:false;
+    return 0;
 }
 
 int X2Mount::terminateLink(void)
