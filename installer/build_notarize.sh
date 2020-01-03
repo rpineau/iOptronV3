@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PACKAGE_NAME="Skywatcher_X2.pkg"
-BUNDLE_NAME="org.rti-zone.iOptronV3_X2"
+BUNDLE_NAME="org.rti-zone.iOptronV3X2"
 
 if [ ! -z "$app_id_signature" ]; then
     codesign -f -s "$app_id_signature" --verbose ../build/Release/libiOptronV3.dylib
