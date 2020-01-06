@@ -515,41 +515,12 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     if(!m_bIsConnected)
         return NOT_CONNECTED;
 
-    // iOptron:
-    // :SRATTTTTTTTT#   right ascension.
-    // Valid data range is [0, 129,600,000].
-    // Note: The resolution is 0.01 arc-second.
-    // TSX provides RA and DEC in degrees with a decimal
-    nRa = int(((dRaInDecimalHours / 24.0 * 360.0) * 60.0 * 60.0) / 0.01);  // actually hundreths of arc sec
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SRA%09d#", nRa);
-
+    nErr = setRaAndDec("CiOptron::syncTo", dRaInDecimalHours, dDecInDecimalDegrees);
+    if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::syncTo] computed command for RA coordinate set: %s\n", getTimestamp(), szCmd);
+        fprintf(Logfile, "[%s] [CiOptron::syncTo] Error: error setting ra and Dec.  nErr: %i\n", getTimestamp(), nErr);
         fflush(Logfile);
-    }
 #endif
-
-    nErr = sendCommand(szCmd, szResp, 1);  // set RA
-    if(nErr) {
-        return nErr;
-    }
-
-    // :SdsTTTTTTTT#    dec
-    // Valid data range is [-32,400,000, +32,400,000].
-    // Note: The resolution is 0.01 arc-second.
-    nDec = int((dDecInDecimalDegrees * 60 * 60) / 0.01);
-    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":Sd%+09d#", nDec);
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::syncTo] computed command for DEC coordinate set: %s\n", getTimestamp(), szCmd);
-        fflush(Logfile);
-    }
-#endif
-
-    nErr = sendCommand(szCmd, szResp, 1);  // set DEC
-    if(nErr) {
         return nErr;
     }
 
@@ -1352,28 +1323,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 #endif
         return ERR_ABORTEDPROCESS;
     }
-
-    dRaArcSec = ((dRaInDecimalHours / 24.0 * 360.0) * 60.0 * 60.0) / 0.01;  // actually hundreths of arc sec
-    // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000].
-    // Note: The resolution is 0.01 arc-second.
-    snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
-    nErr = sendCommand(szCmdRa, szResp, 1);
+    nErr = setRaAndDec("CiOptron::startSlewTo", dRaInDecimalHours, dDecInDecimalDegrees);
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdRa, nErr);
-        fflush(Logfile);
-#endif
-        return nErr;
-    }
-
-    dDecArcSec = (dDecInDecimalDegrees * 60.0 * 60.0) / 0.01; // actually hundreths of arc sec - converts same way
-    // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
-    // Note: The resolution is 0.01 arc-second.
-    snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
-    nErr = sendCommand(szCmdDec, szResp, 1);
-    if (nErr) {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), szCmdDec, nErr);
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: error setting ra and Dec.  nErr: %i\n", getTimestamp(), nErr);
         fflush(Logfile);
 #endif
         return nErr;
@@ -1876,6 +1829,60 @@ int CiOptron::getInfoAndSettings()
     m_bParked = m_nStatus == PARKED?true:false;
     return nErr;
 
+}
+
+#pragma mark - internal set ra/dec on mount
+int CiOptron::setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, double dDecInDecimalDegrees)
+{
+    int nErr = IOPTRON_OK;
+    char szCmdRa[SERIAL_BUFFER_SIZE];
+    char szCmdDec[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+    double dRaArcSec, dDecArcSec;
+
+
+    dRaArcSec = ((dRaInDecimalHours / 24.0 * 360.0) * 60.0 * 60.0) / 0.01;  // actually hundreths of arc sec
+    // :SRATTTTTTTTT#   ra  Valid data range is [0, 129,600,000].
+    // Note: The resolution is 0.01 arc-second.
+    snprintf(szCmdRa, SERIAL_BUFFER_SIZE, ":SRA%09d#", int(dRaArcSec));
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [%s] computed command for RA coordinate set: %s\n", getTimestamp(), pszLocationCalling, szCmdRa);
+        fflush(Logfile);
+    }
+#endif
+
+    nErr = sendCommand(szCmdRa, szResp, 1); // set RA
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdRa, nErr);
+        fflush(Logfile);
+#endif
+        return nErr;
+    }
+
+    dDecArcSec = (dDecInDecimalDegrees * 60.0 * 60.0) / 0.01; // actually hundreths of arc sec - converts same way
+    // :SdsTTTTTTTT#    dec  Valid data range is [-32,400,000, +32,400,000].
+    // Note: The resolution is 0.01 arc-second.
+    snprintf(szCmdDec, SERIAL_BUFFER_SIZE, ":Sd%+09d#", int(dDecArcSec));
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [%s] computed command for DEC coordinate set: %s\n", getTimestamp(), pszLocationCalling, szCmdDec);
+        fflush(Logfile);
+    }
+#endif
+    nErr = sendCommand(szCmdDec, szResp, 1);  // set DEC
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdDec, nErr);
+        fflush(Logfile);
+#endif
+        return nErr;
+    }
+
+    return nErr;
 }
 
 #ifdef IOPTRON_DEBUG

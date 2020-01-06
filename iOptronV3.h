@@ -95,6 +95,7 @@ public:
     int getFirmwareVersion(char *version, unsigned int strMaxLen);
 
     int getRaAndDec(double &dRa, double &dDec, bool bForceMountCall);
+    int setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, double dDecInDecimalDegrees);
     int syncTo(double dRa, double dDec);
     int isGPSGood(bool &bGPSGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
