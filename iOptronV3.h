@@ -27,7 +27,7 @@
 #include "StopWatch.h"
 
 
-// #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
+#define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
 enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD_RESPONSE, COMMAND_FAILED, IOPTRON_ERROR};
 // Response: “0010”, “0011”, “0025”, “0026”, “0030”, “0045”, “0060”, “0061”, “0120” “0121”, “0122”, “5010”, “5035”, “5045”
@@ -58,6 +58,8 @@ enum iOptronCounterWeightStatus {COUNTER_WEIGHT_UP=0, COUNTER_WEIGHT_NORMAL};
 enum iSlewTrackLimitsStatus {LIMITS_EXCEEDED_OR_BELOW_ALTITUDE=0, NO_ISSUE_SLEW_TRACK_ONE_OPTION, NO_ISSUE_SLEW_TRACK_TWO_OPTIONS, NO_STATUS};
 
 enum iSlewResponse {SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE=0, SLEW_ACCEPTED};
+
+enum iMeridianBehavior {STOP_AT_POSITION_LIMIT=0, FLIP_AT_POSITION_LIMIT};
 
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
@@ -139,6 +141,10 @@ public:
     int setDST(bool bDaylight);
     int setTimeAndDate(double julianDateOfUTCTimeIncludingMillis);
 
+    int getMeridianTreatment(int &iBehavior, int &iDegreesPastMeridian);
+    int getAltitudeLimit(int &iDegreesAltLimit);
+    int setMeridianTreatement(int iBehavior, int iDegreesPastMeridian);
+    int setAltitudeLimit(int iDegreesAltLimit);
 private:
 
     SerXInterface                       *m_pSerx;
@@ -154,6 +160,7 @@ private:
     int     m_pierStatus;         // which side of the meridian is the OTA
     int     m_counterWeightStatus; // counterweight up (about to get ugly) or normal
     int     m_nDegreesPastMeridian;  // degrees past the meridian
+    int     m_nAltitudeLimit;       // degrees from 0 could be negative or positive  [-89, +89] but when set through me [-10,55]
     int	 	m_nCacheLimitStatus; // cache if we had no, 1, or 2 slew options last time we slewed.  Filled when we startSlewTo and issue command :QAP#
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate

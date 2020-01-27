@@ -70,7 +70,7 @@
      <widget class="QLabel" name="label_RTI">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>240</x>
         <y>0</y>
         <width>200</width>
         <height>20</height>
@@ -629,13 +629,12 @@ p, li { white-space: pre-wrap; }
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
        <property name="maximum">
-        <double>85.00</double>
+        <double>55.00</double>
        </property>
        <property name="minimum">
         <double>-10.00</double>
        </property>
       </widget>
-
 
       <widget class="QPushButton" name="pushButton_8">
        <property name="geometry">
@@ -655,9 +654,9 @@ p, li { white-space: pre-wrap; }
        <property name="geometry">
         <rect>
          <x>400</x>
-         <y>30</y>
+         <y>28</y>
          <width>252</width>
-         <height>40</height>
+         <height>38</height>
         </rect>
        </property>
        <property name="html">
@@ -668,6 +667,96 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;>The altitude limit applies to both slewing and tracking. Moving by arrow keys are not affected. Movement will be stopped if you track or slew the mount to a position lower than this value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
+         <widget class="QLabel" name="label_merid">
+             <property name="geometry">
+                 <rect>
+                     <x>10</x>
+                     <y>72</y>
+                     <width>127</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="text">
+                 <string>Meridian Treatment :</string>
+             </property>
+             <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+         </widget>
+         <widget class="QRadioButton" name="meridianFlip">
+             <property name="geometry">
+                 <rect>
+                     <x>150</x>
+                     <y>65</y>
+                     <width>50</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="text">
+                 <string>Flip</string>
+             </property>
+         </widget>
+         <widget class="QRadioButton" name="meridianStop">
+             <property name="geometry">
+                 <rect>
+                     <x>150</x>
+                     <y>85</y>
+                     <width>50</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="text">
+                 <string>Stop</string>
+             </property>
+         </widget>
+
+         <widget class="QLabel" name="label_atdegrees">
+             <property name="geometry">
+                 <rect>
+                     <x>185</x>
+                     <y>75</y>
+                     <width>160</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="text">
+                 <string>Past Meridian (Deg) :</string>
+             </property>
+             <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+         </widget>
+
+         <widget class="QSpinBox" name="merdianDegrees">
+             <property name="geometry">
+                 <rect>
+                     <x>350</x>
+                     <y>75</y>
+                     <width>55</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="maximum">
+                 <double>10.00</double>
+             </property>
+         </widget>
+
+         <widget class="QPushButton" name="pushButton_9">
+             <property name="geometry">
+                 <rect>
+                     <x>425</x>
+                     <y>76</y>
+                     <width>180</width>
+                     <height>24</height>
+                 </rect>
+             </property>
+             <property name="text">
+                 <string>Set Meridian Treatment</string>
+             </property>
+         </widget>
      </widget>
 
 

@@ -241,6 +241,8 @@ int X2Mount::execModalSettingsDialog(void)
     bool bAtParked = false;
     double dParkAz, dParkAlt;
     int iAutoDateTime;
+    int iBehavior, iDegreesPastMeridian;
+    int iDegreesAltLimit;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -298,6 +300,19 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("label_actual_track_rate", szTrackingRate);
         dx->setChecked("autoDateTime", iAutoDateTime);
 
+        // read and set current values for meridian treatment
+        m_iOptronV3.getMeridianTreatment(iBehavior, iDegreesPastMeridian);
+        if (iBehavior == STOP_AT_POSITION_LIMIT) {
+            dx->setChecked("meridianStop", 1);
+        } else if (iBehavior == FLIP_AT_POSITION_LIMIT) {
+            dx->setChecked("meridianFlip", 1);
+        }
+        dx->setPropertyInt("merdianDegrees", "value", iDegreesPastMeridian);
+
+        // read and set alt limit settings
+        m_iOptronV3.getAltitudeLimit(iDegreesAltLimit);
+        dx->setPropertyInt("altLimit", "value", iDegreesAltLimit);
+
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
     }
     else {
@@ -314,6 +329,12 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("comboBox_dst", false); // daylight or not
         dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
         dx->setChecked("autoDateTime", iAutoDateTime); // set this anyway to indicate our value even if mount isn't connected
+        dx->setEnabled("altLimit", false);  // cant change altitude limit number
+        dx->setEnabled("pushButton_8", false);  // cant set altitude limit period
+        dx->setEnabled("meridianFlip", false);  // cant push merdian treatement: flip
+        dx->setEnabled("meridianStop", false);  // cant push merdian treatement: stop
+        dx->setEnabled("merdianDegrees", false);  // cant change merdian treatement degrees
+        dx->setEnabled("pushButton_9", false);  // cant change merdian treatement period
     }
 
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
@@ -488,6 +509,8 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 {
     int nErr = SB_OK;
     double dParkAz, dParkAlt, dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
+    int iAltLimit, iMeridianBehavior, iMeridianDegrees;
+    bool doMeridianStuff = true;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bOk = false;
     bool bInDST = true;  // most of the time its summer when we observe the heavens
@@ -681,6 +704,53 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             if (nErr) {
                 snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error going to straight-up position to take flats : %d", nErr);
                 uiex->messageBox("Error", szTmpBuf);
+            }
+        }
+    } else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_8_clicked (_8 means set altitude limit)\n", timestamp);
+            fflush(LogFile);
+        }
+#endif
+        doConfirm(bOk, "Are you sure you want to set the altitude limit ?");
+        if(bOk) {
+            uiex->propertyInt("altLimit", "value", iAltLimit);
+            nErr = m_iOptronV3.setAltitudeLimit(iAltLimit);
+            if(nErr) {
+                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting altitude limit : %d", nErr);
+                uiex->messageBox("Error", szTmpBuf);
+            }
+        }
+    } else if (!strcmp(pszEvent, "on_pushButton_9_clicked")) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_9_clicked (_9 means set meridian treatement)\n", timestamp);
+            fflush(LogFile);
+        }
+#endif
+        doConfirm(bOk, "Are you sure you want to set both the meridian treatment (flip vs stop) AND set the degrees past meridian ?");
+        if(bOk) {
+            if (uiex->isChecked("meridianStop")) {
+                iMeridianBehavior = STOP_AT_POSITION_LIMIT;
+            } else if (uiex->isChecked("meridianFlip")) {
+                iMeridianBehavior = FLIP_AT_POSITION_LIMIT;
+            } else {
+                doMeridianStuff = false;
+            }
+            uiex->propertyInt("merdianDegrees", "value", iMeridianDegrees);
+            if (doMeridianStuff) {
+                nErr = m_iOptronV3.setMeridianTreatement(iMeridianBehavior, iMeridianDegrees);
+                if (nErr) {
+                    snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error setting meridian treatment : %d", nErr);
+                    uiex->messageBox("Error", szTmpBuf);
+                }
             }
         }
     }

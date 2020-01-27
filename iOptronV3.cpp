@@ -45,7 +45,7 @@ int CiOptron::Connect(char *pszPort)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-    char szMeridianResp[SERIAL_BUFFER_SIZE];
+    int iBehavior, iDegreesPastMeridian, iDegreesAltLimit;
     int connectSpeed = 115200;  // default for CEM120xxx
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
@@ -102,26 +102,19 @@ int CiOptron::Connect(char *pszPort)
         return nErr;
     }
 
-    // Command: “:GMT#”
-    // Response: “nnn#”
-    // This command will get the behavior about meridian treatment.
-    // The first digit 0 stands for stop at the position limit set below.
-    // The first digit 1 stands for flip at the position limit set below.
-    // The last 2 digits stands for the position limit of degrees past meridian.
-    // get more info and status
-    memset(szResp, 0, SERIAL_BUFFER_SIZE);  // use same buffer
-    nErr = sendCommand(":GMT#", szResp, 4);  // get meridian treatment set by hand controller (ran out of room on settings page)
+    nErr = getMeridianTreatment(iBehavior, iDegreesPastMeridian);
     if(nErr) {
         m_bIsConnected = false;
         return nErr;
     }
-    memcpy(szMeridianResp, szResp+1, 2);
-    m_nDegreesPastMeridian = atoi(szMeridianResp);  // save degrees past meridian value
+    m_nDegreesPastMeridian = iDegreesPastMeridian;  // save degrees past meridian value
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    fprintf(Logfile, "[%s] CiOptron::Connect meridian treatment read from mount.  degrees past meridian: %i. behavior: %s\n", getTimestamp(), m_nDegreesPastMeridian, szResp[0]=='0'?"stop":"flip");
-    fflush(Logfile);
-#endif
+    nErr = getAltitudeLimit(iDegreesAltLimit);
+    if(nErr) {
+        m_bIsConnected = false;
+        return nErr;
+    }
+    m_nAltitudeLimit = iDegreesAltLimit;  // save altitude limit
 
     getInfoAndSettings();
     return nErr;
@@ -1881,6 +1874,161 @@ int CiOptron::setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, do
 #endif
         return nErr;
     }
+
+    return nErr;
+}
+
+int CiOptron::getMeridianTreatment(int &iBehavior, int &iDegreesPastMeridian)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szDegreesPastMeridian[SERIAL_BUFFER_SIZE], szBehavior[2];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getMeridianTreatment] called\n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+
+    // Response: “nnn#”
+    // The first digit 0 stands for stop at the position limit set below.
+    // The first digit 1 stands for flip at the position limit set below.
+    // The last 2 digits stands for the position limit of degrees past meridian.
+    nErr = sendCommand(":GMT#", szResp, 4);
+
+    if(nErr)
+        return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getMeridianTreatment] :GMT# command response %s\n", getTimestamp(), szResp);
+        fflush(Logfile);
+    }
+#endif
+
+    memset(szDegreesPastMeridian, 0, SERIAL_BUFFER_SIZE);
+    memset(szBehavior, 0, 2);
+
+    memcpy(szBehavior, szResp, 1); // The first digit is the behavior
+    memcpy(szDegreesPastMeridian, szResp+1, 2); // The last 2 digits indicate degrees past meridian
+    iBehavior = atoi(szBehavior);
+    iDegreesPastMeridian = atoi(szDegreesPastMeridian);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getMeridianTreatment] behavior: %i and degrees: %i\n", getTimestamp(), iBehavior, iDegreesPastMeridian);
+        fflush(Logfile);
+    }
+#endif
+    return nErr;
+}
+
+int CiOptron::getAltitudeLimit(int &iDegreesAltLimit)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szDegreesAltLimit[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getAltitudeLimit] called\n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+
+    // Response: “snn#”
+    // The first digit is the sign of the degree (why that would be negative is beyond me)
+    // The last 2 digits stands for the degrees altitude limit
+    nErr = sendCommand(":GAL#", szResp, 4);
+
+    if(nErr)
+        return nErr;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getAltitudeLimit] :GAL# command response %s\n", getTimestamp(), szResp);
+        fflush(Logfile);
+    }
+#endif
+
+    memset(szDegreesAltLimit, 0, SERIAL_BUFFER_SIZE);
+
+    memcpy(szDegreesAltLimit, szResp, 3);
+    iDegreesAltLimit = atoi(szDegreesAltLimit);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getAltitudeLimit] degrees: %i\n", getTimestamp(), iDegreesAltLimit);
+        fflush(Logfile);
+    }
+#endif
+    return nErr;
+}
+
+int CiOptron::setMeridianTreatement(int iBehavior, int iDegreesPastMeridian)
+{
+    int nErr = IOPTRON_OK;
+    char szCmd[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+
+    // Command: “:SMTnnn#”
+    //  Response: “1”
+    //  This command will set the behavior about meridian treatment.
+    //  The first digit 0 stands for stop at the position limit set below.
+    //  The first digit 1 stands for flip at the position limit set below.
+    //  The last 2 digits stands for the position limit of degrees past meridian.
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SMT%.1d%02d#", iBehavior, iDegreesPastMeridian);
+
+    #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] computed command for setting meridian treatment: %s\n", getTimestamp(), szCmd);
+        fflush(Logfile);
+    }
+    #endif
+
+    nErr = sendCommand(szCmd, szResp, 1);  // set meridian treatment
+    if (nErr) {
+        #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        fprintf(Logfile, "[%s] Error: sendCommand for setting meridian treatment bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
+        fflush(Logfile);
+        #endif
+        return nErr;
+    }
+    m_nDegreesPastMeridian = iDegreesPastMeridian; // cache this value but only if everything above worked
+
+    return nErr;
+}
+int CiOptron::setAltitudeLimit(int iDegreesAltLimit)
+{
+    int nErr = IOPTRON_OK;
+    char szCmd[SERIAL_BUFFER_SIZE];
+    char szResp[SERIAL_BUFFER_SIZE];
+
+    // Command: “:SALsnn#”
+    // Response: “1”
+    // This command sets the altitude limit. The altitude limit not only applies to tracking,
+    // but also applies to slewing. Movement caused by arrow buttons does not affect by this limit.
+    // Tracking will be stopped if you move the mount to a position exceeds any limit.
+    // Note: Valid data range is [-89, +89]. The resolution is 1 degree.
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SAL%+.2d#", iDegreesAltLimit);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] computed command for setting altitude limit: %s\n", getTimestamp(), szCmd);
+        fflush(Logfile);
+    }
+#endif
+
+    nErr = sendCommand(szCmd, szResp, 1);  // set altitude limit
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        fprintf(Logfile, "[%s] Error: sendCommand for setting altitude limit bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
+        fflush(Logfile);
+#endif
+        return nErr;
+    }
+    m_nAltitudeLimit = iDegreesAltLimit; // set only if all succeeded
 
     return nErr;
 }
