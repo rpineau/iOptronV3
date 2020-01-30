@@ -46,6 +46,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	m_bParked = false;
     m_bLinked = false;
 	m_bSetAutoTimeData = false;
+	m_bHasDoneZeroPosition = false;
 
     m_iOptronV3.setSerxPointer(m_pSerX);
     m_iOptronV3.setTSX(m_pTheSkyXForMounts);
@@ -239,6 +240,7 @@ int X2Mount::execModalSettingsDialog(void)
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
     bool bAtZero = false;
     bool bAtParked = false;
+    bool bOkToSlew = false;
     double dParkAz, dParkAlt;
     int iAutoDateTime;
     int iBehavior, iDegreesPastMeridian;
@@ -280,15 +282,24 @@ int X2Mount::execModalSettingsDialog(void)
 
         m_iOptronV3.getGPSStatusString(szGPSStatus, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_1", szGPSStatus);
+        if (!strcmp(szGPSStatus, "Working Data Valid")) {
+            dx->setChecked("checkBox_gps_good", 1);
+        }
         m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_3", szTimeSource);
         m_iOptronV3.getUtcOffset(szUtcOffsetInMins);
         dx->setText("lineEdit_utc", szUtcOffsetInMins);
+        if (strlen(szUtcOffsetInMins) != 0) {
+            dx->setChecked("checkBox_utc_good", 1);
+        }
         nErr = m_iOptronV3.getDST(bDaylight);
         if (nErr) {
             dx->setCurrentIndex("comboBox_dst", 0);
         } else {
             dx->setCurrentIndex("comboBox_dst", bDaylight?1:2);
+        }
+        if (dx->currentIndex("comboBox_dst") != 0) {
+            dx->setChecked("checkBox_dst_good", 1);
         }
         m_iOptronV3.getAtZeroPosition(bAtZero);  // must be after other checks since position status already set by those calls
         dx->setChecked("checkBox_z", bAtZero ? 1:0);
@@ -314,6 +325,17 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setPropertyInt("altLimit", "value", iDegreesAltLimit);
 
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
+
+        dx->setEnabled("checkBox_zero_done", true); // allow user to check and uncheck this
+        dx->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);
+
+        if (okToSlew(dx, bOkToSlew)) {
+            dx->setText("calculator_concl", "Good to Slew");
+            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #45629a;");
+        } else {
+            dx->setText("calculator_concl", "Do Not Slew");
+            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #ff0040;");
+        }
     }
     else {
         dx->setEnabled("parkAz", false);
@@ -335,10 +357,17 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("meridianStop", false);  // cant push merdian treatement: stop
         dx->setEnabled("merdianDegrees", false);  // cant change merdian treatement degrees
         dx->setEnabled("pushButton_9", false);  // cant change merdian treatement period
+        dx->setEnabled("checkBox_zero_done", false); // cant check that we know what we are doing wrt zero position seeking
+        dx->setText("calculator_concl", "");  // not being enabled.. we have no conclusion
     }
 
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
     dx->setEnabled("checkBox_p", false);  // checkbox indicating if you are at park position.. output only
+    dx->setEnabled("checkBox_gps_good", false); // checkbox telling you GPS is good to slew
+    dx->setEnabled("checkBox_utc_good", false); // checkbox telling you UTC offset is set appropriately for slewing
+    dx->setEnabled("checkBox_dst_good", false); // checkbox telling you that DST has been set for slewing
+    dx->setEnabled("checkBox_zero_good", false); // checkbox confirming you did a seek zero position for slewing
+    dx->setEnabled("label_promise_zero", false);  // grey out text for above checkbox
 
 	//Display the user interface
     m_nCurrentDialog = MAIN;
@@ -413,6 +442,13 @@ int X2Mount::execModalSettingsDialog(void)
         }
 	}
 	return nErr;
+}
+
+int X2Mount::okToSlew(X2GUIExchangeInterface* dx, bool &bOkToSlew)
+{
+    bOkToSlew = false;
+
+    return bOkToSlew;
 }
 
 int X2Mount::doConfirm(bool &bPressedOK, const char *szText)
@@ -686,6 +722,8 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             if (nErr) {
                 snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error searching mechanical zero/home position : %d", nErr);
                 uiex->messageBox("Error", szTmpBuf);
+            } else {
+                m_bHasDoneZeroPosition = true;
             }
         }
     } else if (!strcmp(pszEvent, "on_pushButton_5_clicked")) {
@@ -753,7 +791,9 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
                 }
             }
         }
-    }
+    } else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
+
+	}
     return nErr;
 }
 

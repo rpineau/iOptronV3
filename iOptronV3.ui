@@ -138,7 +138,125 @@
        <string>*Not Tracking*</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="GroupBox">
+     <widget class="QGroupBox" name="groupBox_sslew">
+      <property name="geometry">
+       <rect>
+        <x>460</x>
+        <y>72</y>
+        <width>175</width>
+        <height>480</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Safe-slew Calculator</string>
+      </property>
+      <widget class="QCheckBox" name="checkBox_gps_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>30</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>GPS Good to Go</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_utc_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>80</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>UTC Offset Set</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_dst_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>155</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>DST Set</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="calculator_concl">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>225</y>
+         <width>120</width>
+         <height>54</height>
+        </rect>
+       </property>
+        <property name="text">
+         <string>Good to Slew</string>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>20</pointsize>
+          <weight>50</weight>
+         </font>
+        </property>
+       <property name="styleSheet">
+        <string>color:  #45629a;</string>
+       </property>
+      </widget>
+
+      <widget class="QCheckBox" name="checkBox_zero_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>335</y>
+         <width>145</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Seek Zero Position</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_zero_done">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>355</y>
+         <width>145</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_promise_zero">
+       <property name="geometry">
+        <rect>
+         <x>38</x>
+         <y>358</y>
+         <width>137</width>
+         <height>115</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>I've already done a Seek Zero Position and since have not turned off the mount without it being parked</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+
+     <widget class="QGroupBox" name="GroupBox_cr">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -388,7 +506,7 @@ p, li { white-space: pre-wrap; }
        <string>Zero Position</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="GroupBox">
+     <widget class="QGroupBox" name="GroupBox_pos">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -497,7 +615,7 @@ p, li { white-space: pre-wrap; }
        <string>Parked</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="groupBox_pk">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -588,7 +706,7 @@ p, li { white-space: pre-wrap; }
       </widget>
      </widget>
 
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="groupBox_l">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -759,7 +877,28 @@ p, li { white-space: pre-wrap; }
          </widget>
      </widget>
 
-
+     <widget class="QLabel" name="label_refresh_window">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>792</y>
+        <width>200</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>(refresh window to see updates)</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>10</weight>
+       </font>
+      </property>
+     </widget>
      <widget class="QPushButton" name="pushButtonOK">
       <property name="geometry">
        <rect>
