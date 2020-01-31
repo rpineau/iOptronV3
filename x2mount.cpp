@@ -328,8 +328,22 @@ int X2Mount::execModalSettingsDialog(void)
 
         dx->setEnabled("checkBox_zero_done", true); // allow user to check and uncheck this
         dx->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] execModalSettingsDialog initializing checkBox_zero_good .  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
+            fflush(LogFile);
+        }
+#endif
+        if (dx->isChecked("checkBox_zero_good")) {
+            dx->setEnabled("label_promise_zero", false);  // grey out text for manual checkbox saying that all is good about setting zero position
+            dx->setEnabled("checkBox_zero_done", false);  // and its associated checkbox
+        }
 
-        if (okToSlew(dx, bOkToSlew)) {
+        okToSlew(dx, bOkToSlew);
+        if (bOkToSlew) {
             dx->setText("calculator_concl", "Good to Slew");
             dx->setPropertyString("calculator_concl", "styleSheet", "color:  #45629a;");
         } else {
@@ -359,6 +373,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("pushButton_9", false);  // cant change merdian treatement period
         dx->setEnabled("checkBox_zero_done", false); // cant check that we know what we are doing wrt zero position seeking
         dx->setText("calculator_concl", "");  // not being enabled.. we have no conclusion
+        dx->setEnabled("label_promise_zero", false);  // grey out text for above checkbox
     }
 
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
@@ -367,7 +382,6 @@ int X2Mount::execModalSettingsDialog(void)
     dx->setEnabled("checkBox_utc_good", false); // checkbox telling you UTC offset is set appropriately for slewing
     dx->setEnabled("checkBox_dst_good", false); // checkbox telling you that DST has been set for slewing
     dx->setEnabled("checkBox_zero_good", false); // checkbox confirming you did a seek zero position for slewing
-    dx->setEnabled("label_promise_zero", false);  // grey out text for above checkbox
 
 	//Display the user interface
     m_nCurrentDialog = MAIN;
@@ -440,15 +454,30 @@ int X2Mount::execModalSettingsDialog(void)
         if(m_pIniUtil){
             m_pIniUtil->writeInt(PARENT_KEY, AUTO_DATETIME, m_bSetAutoTimeData?1:0);
         }
+
+        if (dx->isChecked("checkBox_zero_done")) {
+            m_bHasDoneZeroPosition = true;
+#ifdef IOPTRON_X2_DEBUG
+            if (LogFile) {
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(LogFile, "[%s] execModalSettingsDialog label_promise_zero checked.  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
+                fflush(LogFile);
+            }
+#endif
+        }
 	}
 	return nErr;
 }
 
 int X2Mount::okToSlew(X2GUIExchangeInterface* dx, bool &bOkToSlew)
 {
-    bOkToSlew = false;
-
-    return bOkToSlew;
+    bOkToSlew = (dx->isChecked("checkBox_gps_good") &&
+                dx->isChecked("checkBox_utc_good") &&
+                dx->isChecked("checkBox_dst_good") &&
+                dx->isChecked("checkBox_zero_good"));
+    return 0;
 }
 
 int X2Mount::doConfirm(bool &bPressedOK, const char *szText)
@@ -958,6 +987,7 @@ int X2Mount::terminateLink(void)
 #endif
     nErr = m_iOptronV3.Disconnect();
     m_bLinked = false;
+    m_bHasDoneZeroPosition = false;
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
