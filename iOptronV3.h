@@ -59,6 +59,8 @@ enum iSlewTrackLimitsStatus {LIMITS_EXCEEDED_OR_BELOW_ALTITUDE=0, NO_ISSUE_SLEW_
 
 enum iSlewResponse {SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE=0, SLEW_ACCEPTED};
 
+enum iMeridianBehavior {STOP_AT_POSITION_LIMIT=0, FLIP_AT_POSITION_LIMIT};
+
 #define SERIAL_BUFFER_SIZE 256
 #define MAX_TIMEOUT 1000         // was 500 ms
 #define IOPTRON_LOG_BUFFER_SIZE 1024
@@ -95,6 +97,7 @@ public:
     int getFirmwareVersion(char *version, unsigned int strMaxLen);
 
     int getRaAndDec(double &dRa, double &dDec, bool bForceMountCall);
+    int setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, double dDecInDecimalDegrees);
     int syncTo(double dRa, double dDec);
     int isGPSGood(bool &bGPSGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
@@ -138,6 +141,10 @@ public:
     int setDST(bool bDaylight);
     int setTimeAndDate(double julianDateOfUTCTimeIncludingMillis);
 
+    int getMeridianTreatment(int &iBehavior, int &iDegreesPastMeridian);
+    int getAltitudeLimit(int &iDegreesAltLimit);
+    int setMeridianTreatement(int iBehavior, int iDegreesPastMeridian);
+    int setAltitudeLimit(int iDegreesAltLimit);
 private:
 
     SerXInterface                       *m_pSerx;
@@ -153,6 +160,7 @@ private:
     int     m_pierStatus;         // which side of the meridian is the OTA
     int     m_counterWeightStatus; // counterweight up (about to get ugly) or normal
     int     m_nDegreesPastMeridian;  // degrees past the meridian
+    int     m_nAltitudeLimit;       // degrees from 0 could be negative or positive  [-89, +89] but when set through me [-10,55]
     int	 	m_nCacheLimitStatus; // cache if we had no, 1, or 2 slew options last time we slewed.  Filled when we startSlewTo and issue command :QAP#
     int		m_nGPSStatus;		// CEM120_EC and EC2 mounts are crap without GPS receiving signal
     int		m_nTimeSource;		// CEM120xxx mounts rely heavily on DST being set and time being accurate

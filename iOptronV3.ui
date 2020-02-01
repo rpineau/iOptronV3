@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>476</width>
-    <height>730</height>
+    <width>676</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>476</width>
-    <height>730</height>
+    <width>676</width>
+    <height>840</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>476</width>
-    <height>730</height>
+    <width>676</width>
+    <height>840</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -70,14 +70,14 @@
      <widget class="QLabel" name="label_RTI">
       <property name="geometry">
        <rect>
-        <x>128</x>
+        <x>240</x>
         <y>0</y>
         <width>200</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>Eric Roubal &amp; RTI-Zone, 2019</string>
+       <string>Eric Roubal &amp; RTI-Zone, 2020</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_ss">
@@ -138,7 +138,124 @@
        <string>*Not Tracking*</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="GroupBox">
+     <widget class="QGroupBox" name="groupBox_sslew">
+      <property name="geometry">
+       <rect>
+        <x>456</x>
+        <y>72</y>
+        <width>184</width>
+        <height>480</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Safe-slew Calculator</string>
+      </property>
+      <widget class="QCheckBox" name="checkBox_gps_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>30</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>GPS Good to Go</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_utc_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>80</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>UTC Offset Set</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_dst_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>155</y>
+         <width>120</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>DST Set</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="calculator_concl">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>225</y>
+         <width>120</width>
+         <height>54</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string>color:  #45629a;</string>
+       </property>
+       <property name="text">
+        <string>Good to Slew</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_zero_good">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>335</y>
+         <width>145</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Seek Zero Position</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_zero_done">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>355</y>
+         <width>145</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_promise_zero">
+       <property name="geometry">
+        <rect>
+         <x>38</x>
+         <y>358</y>
+         <width>136</width>
+         <height>115</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>I've already done a Seek Zero Position and since have not turned off the mount without it being parked</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="GroupBox_cr">
       <property name="geometry">
        <rect>
         <x>8</x>
@@ -148,7 +265,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Key Mount Values before Aligning/Slewing</string>
+       <string>Critical Mount Settings</string>
       </property>
       <widget class="QLabel" name="label_gbox_key_values">
        <property name="geometry">
@@ -252,7 +369,7 @@
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:6pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:6pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;Important! The minute offset from UTC (time zone). Note: The Daylight- Saving Time will not be take account into this value. Valid values [-720, +780]. Example: US Central is -360&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
@@ -375,120 +492,27 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QCheckBox" name="checkBox_z">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>358</y>
+        <width>120</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Zero Position</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="GroupBox_pos">
       <property name="geometry">
        <rect>
         <x>8</x>
         <y>360</y>
-        <width>424</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Park Settings</string>
-      </property>
-      <widget class="QLabel" name="label_pk">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>32</y>
-         <width>131</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Park Azimuth (Deg.) :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QDoubleSpinBox" name="parkAz">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>32</y>
-         <width>80</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <double>360.000000000000000</double>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_pk_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>64</y>
-         <width>131</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Park Altitude (Deg.) :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QDoubleSpinBox" name="parkAlt">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>64</y>
-         <width>80</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <double>90.000000000000000</double>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="geometry">
-        <rect>
-         <x>250</x>
-         <y>64</y>
-         <width>144</width>
-         <height>24</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Set Park Position</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="checkBox_p">
-       <property name="geometry">
-        <rect>
-         <x>270</x>
-         <y>32</y>
-         <width>100</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Parked</string>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QGroupBox" name="GroupBox">
-      <property name="geometry">
-       <rect>
-        <x>8</x>
-        <y>472</y>
-        <width>424</width>
+        <width>432</width>
         <height>192</height>
        </rect>
-      </property>
-      <property name="windowTitle">
-       <string>GroupBox</string>
       </property>
       <property name="title">
        <string>Position Settings</string>
@@ -537,29 +561,16 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>176</x>
          <y>56</y>
-         <width>240</width>
-         <height>88</height>
+         <width>248</width>
+         <height>80</height>
         </rect>
        </property>
        <property name="html">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;This command will automatically search the mechanical zero position immediately by detecting homing sensors.  Current zero position/home position will be overwritten by this operation.&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt; font-weight:600;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;: This command will only affect this mount if it is a CEM120xx or CEM60 series iOptron mount.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="checkBox_z">
-       <property name="geometry">
-        <rect>
-         <x>24</x>
-         <y>112</y>
-         <width>120</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Zero Position</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;This command will automatically search the mechanical zero position immediately by detecting homing sensors.  Current zero position/home position will be overwritten by this operation.&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt; font-weight:600;&quot;&gt;Note&lt;/span&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;: This command will only affect CEM120xx series mounts.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
       <widget class="QPushButton" name="pushButton_5">
@@ -589,11 +600,302 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </widget>
+     <widget class="QCheckBox" name="checkBox_p">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>568</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Parked</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_pk">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>570</y>
+        <width>632</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Park Settings</string>
+      </property>
+      <widget class="QLabel" name="label_pk">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>32</y>
+         <width>99</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Azimuth (Deg.) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="parkAz">
+       <property name="geometry">
+        <rect>
+         <x>117</x>
+         <y>32</y>
+         <width>78</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <double>360.000000000000000</double>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_pk_2">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>32</y>
+         <width>99</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Altitude (Deg.) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="parkAlt">
+       <property name="geometry">
+        <rect>
+         <x>325</x>
+         <y>32</y>
+         <width>80</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <double>90.000000000000000</double>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="geometry">
+        <rect>
+         <x>440</x>
+         <y>32</y>
+         <width>144</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set Park Position</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_l">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>655</y>
+        <width>632</width>
+        <height>120</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Limit Settings</string>
+      </property>
+      <widget class="QLabel" name="label_altl">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>32</y>
+         <width>130</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Altitude Limit (Deg.) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="altLimit">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>32</y>
+         <width>65</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="minimum">
+        <number>-10</number>
+       </property>
+       <property name="maximum">
+        <number>55</number>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_8">
+       <property name="geometry">
+        <rect>
+         <x>245</x>
+         <y>32</y>
+         <width>144</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set Altitude Limit</string>
+       </property>
+      </widget>
+      <widget class="QTextBrowser" name="textBrowser3">
+       <property name="geometry">
+        <rect>
+         <x>400</x>
+         <y>28</y>
+         <width>224</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;The altitude limit applies to slewing, tracking and parking. Moving by arrow keys are not affected. You will get an error if you track or slew the mount to an altitude lower than this value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_merid">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>72</y>
+         <width>127</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Meridian Treatment :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="meridianFlip">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>65</y>
+         <width>50</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Flip</string>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="meridianStop">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>85</y>
+         <width>50</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_atdegrees">
+       <property name="geometry">
+        <rect>
+         <x>185</x>
+         <y>75</y>
+         <width>160</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Past Meridian (Deg) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="merdianDegrees">
+       <property name="geometry">
+        <rect>
+         <x>350</x>
+         <y>75</y>
+         <width>55</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_9">
+       <property name="geometry">
+        <rect>
+         <x>425</x>
+         <y>76</y>
+         <width>180</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set Meridian Treatment</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QLabel" name="label_refresh_window">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>792</y>
+        <width>200</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>10</weight>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>(refresh window to see updates)</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+     </widget>
      <widget class="QPushButton" name="pushButtonOK">
       <property name="geometry">
        <rect>
-        <x>257</x>
-        <y>672</y>
+        <x>457</x>
+        <y>782</y>
         <width>81</width>
         <height>24</height>
        </rect>
@@ -608,8 +910,8 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButtonCancel">
       <property name="geometry">
        <rect>
-        <x>340</x>
-        <y>672</y>
+        <x>540</x>
+        <y>782</y>
         <width>81</width>
         <height>24</height>
        </rect>

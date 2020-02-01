@@ -28,7 +28,7 @@
 // Include files for iOptron mount
 #include "iOptronV3.h"
 
-#define DRIVER_VERSION 1.08
+#define DRIVER_VERSION 1.1
 
 #define PARENT_KEY			"iOptronV3"
 #define CHILD_KEY_PORT_NAME "PortName"
@@ -222,9 +222,13 @@ private:
     int m_nCurrentDialog;
 
 	bool	m_bSetAutoTimeData;
+
+	bool m_bHasDoneZeroPosition;
+
 	int inDaylightTime(bool &bInDST);
 
     int doConfirm(bool &bPressedOK, const char *szText);
+    int okToSlew(X2GUIExchangeInterface* dx, bool &bOkToSlew);
 
     int doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
     int doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);

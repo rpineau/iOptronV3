@@ -46,6 +46,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	m_bParked = false;
     m_bLinked = false;
 	m_bSetAutoTimeData = false;
+	m_bHasDoneZeroPosition = false;
 
     m_iOptronV3.setSerxPointer(m_pSerX);
     m_iOptronV3.setTSX(m_pTheSkyXForMounts);
@@ -239,8 +240,11 @@ int X2Mount::execModalSettingsDialog(void)
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
     bool bAtZero = false;
     bool bAtParked = false;
+    bool bOkToSlew = false;
     double dParkAz, dParkAlt;
     int iAutoDateTime;
+    int iBehavior, iDegreesPastMeridian;
+    int iDegreesAltLimit;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -278,15 +282,24 @@ int X2Mount::execModalSettingsDialog(void)
 
         m_iOptronV3.getGPSStatusString(szGPSStatus, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_1", szGPSStatus);
+        if (!strcmp(szGPSStatus, "Working Data Valid")) {
+            dx->setChecked("checkBox_gps_good", 1);
+        }
         m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_3", szTimeSource);
         m_iOptronV3.getUtcOffset(szUtcOffsetInMins);
         dx->setText("lineEdit_utc", szUtcOffsetInMins);
+        if (strlen(szUtcOffsetInMins) != 0) {
+            dx->setChecked("checkBox_utc_good", 1);
+        }
         nErr = m_iOptronV3.getDST(bDaylight);
         if (nErr) {
             dx->setCurrentIndex("comboBox_dst", 0);
         } else {
             dx->setCurrentIndex("comboBox_dst", bDaylight?1:2);
+        }
+        if (dx->currentIndex("comboBox_dst") != 0) {
+            dx->setChecked("checkBox_dst_good", 1);
         }
         m_iOptronV3.getAtZeroPosition(bAtZero);  // must be after other checks since position status already set by those calls
         dx->setChecked("checkBox_z", bAtZero ? 1:0);
@@ -298,7 +311,45 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setText("label_actual_track_rate", szTrackingRate);
         dx->setChecked("autoDateTime", iAutoDateTime);
 
+        // read and set current values for meridian treatment
+        m_iOptronV3.getMeridianTreatment(iBehavior, iDegreesPastMeridian);
+        if (iBehavior == STOP_AT_POSITION_LIMIT) {
+            dx->setChecked("meridianStop", 1);
+        } else if (iBehavior == FLIP_AT_POSITION_LIMIT) {
+            dx->setChecked("meridianFlip", 1);
+        }
+        dx->setPropertyInt("merdianDegrees", "value", iDegreesPastMeridian);
+
+        // read and set alt limit settings
+        m_iOptronV3.getAltitudeLimit(iDegreesAltLimit);
+        dx->setPropertyInt("altLimit", "value", iDegreesAltLimit);
+
         dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
+
+        dx->setEnabled("checkBox_zero_done", true); // allow user to check and uncheck this
+        dx->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] execModalSettingsDialog initializing checkBox_zero_good .  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
+            fflush(LogFile);
+        }
+#endif
+        if (dx->isChecked("checkBox_zero_good")) {
+            dx->setEnabled("label_promise_zero", false);  // grey out text for manual checkbox saying that all is good about setting zero position
+            dx->setEnabled("checkBox_zero_done", false);  // and its associated checkbox
+        }
+
+        okToSlew(dx, bOkToSlew);
+        if (bOkToSlew) {
+            dx->setText("calculator_concl", "Good to Slew");
+            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #45629a;");
+        } else {
+            dx->setText("calculator_concl", "Do Not Slew");
+            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #ff0040;");
+        }
     }
     else {
         dx->setEnabled("parkAz", false);
@@ -314,10 +365,23 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("comboBox_dst", false); // daylight or not
         dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
         dx->setChecked("autoDateTime", iAutoDateTime); // set this anyway to indicate our value even if mount isn't connected
+        dx->setEnabled("altLimit", false);  // cant change altitude limit number
+        dx->setEnabled("pushButton_8", false);  // cant set altitude limit period
+        dx->setEnabled("meridianFlip", false);  // cant push merdian treatement: flip
+        dx->setEnabled("meridianStop", false);  // cant push merdian treatement: stop
+        dx->setEnabled("merdianDegrees", false);  // cant change merdian treatement degrees
+        dx->setEnabled("pushButton_9", false);  // cant change merdian treatement period
+        dx->setEnabled("checkBox_zero_done", false); // cant check that we know what we are doing wrt zero position seeking
+        dx->setText("calculator_concl", "");  // not being enabled.. we have no conclusion
+        dx->setEnabled("label_promise_zero", false);  // grey out text for above checkbox
     }
 
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
     dx->setEnabled("checkBox_p", false);  // checkbox indicating if you are at park position.. output only
+    dx->setEnabled("checkBox_gps_good", false); // checkbox telling you GPS is good to slew
+    dx->setEnabled("checkBox_utc_good", false); // checkbox telling you UTC offset is set appropriately for slewing
+    dx->setEnabled("checkBox_dst_good", false); // checkbox telling you that DST has been set for slewing
+    dx->setEnabled("checkBox_zero_good", false); // checkbox confirming you did a seek zero position for slewing
 
 	//Display the user interface
     m_nCurrentDialog = MAIN;
@@ -390,8 +454,30 @@ int X2Mount::execModalSettingsDialog(void)
         if(m_pIniUtil){
             m_pIniUtil->writeInt(PARENT_KEY, AUTO_DATETIME, m_bSetAutoTimeData?1:0);
         }
+
+        if (dx->isChecked("checkBox_zero_done")) {
+            m_bHasDoneZeroPosition = true;
+#ifdef IOPTRON_X2_DEBUG
+            if (LogFile) {
+                ltime = time(NULL);
+                timestamp = asctime(localtime(&ltime));
+                timestamp[strlen(timestamp) - 1] = 0;
+                fprintf(LogFile, "[%s] execModalSettingsDialog label_promise_zero checked.  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
+                fflush(LogFile);
+            }
+#endif
+        }
 	}
 	return nErr;
+}
+
+int X2Mount::okToSlew(X2GUIExchangeInterface* dx, bool &bOkToSlew)
+{
+    bOkToSlew = (dx->isChecked("checkBox_gps_good") &&
+                dx->isChecked("checkBox_utc_good") &&
+                dx->isChecked("checkBox_dst_good") &&
+                dx->isChecked("checkBox_zero_good"));
+    return 0;
 }
 
 int X2Mount::doConfirm(bool &bPressedOK, const char *szText)
@@ -488,6 +574,8 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 {
     int nErr = SB_OK;
     double dParkAz, dParkAlt, dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
+    int iAltLimit, iMeridianBehavior, iMeridianDegrees;
+    bool doMeridianStuff = true;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bOk = false;
     bool bInDST = true;  // most of the time its summer when we observe the heavens
@@ -663,6 +751,8 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             if (nErr) {
                 snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error searching mechanical zero/home position : %d", nErr);
                 uiex->messageBox("Error", szTmpBuf);
+            } else {
+                m_bHasDoneZeroPosition = true;
             }
         }
     } else if (!strcmp(pszEvent, "on_pushButton_5_clicked")) {
@@ -683,7 +773,56 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
                 uiex->messageBox("Error", szTmpBuf);
             }
         }
-    }
+    } else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_8_clicked (_8 means set altitude limit)\n", timestamp);
+            fflush(LogFile);
+        }
+#endif
+        doConfirm(bOk, "Are you sure you want to set the altitude limit ?");
+        if(bOk) {
+            uiex->propertyInt("altLimit", "value", iAltLimit);
+            nErr = m_iOptronV3.setAltitudeLimit(iAltLimit);
+            if(nErr) {
+                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting altitude limit : %d", nErr);
+                uiex->messageBox("Error", szTmpBuf);
+            }
+        }
+    } else if (!strcmp(pszEvent, "on_pushButton_9_clicked")) {
+#ifdef IOPTRON_X2_DEBUG
+        if (LogFile) {
+            ltime = time(NULL);
+            timestamp = asctime(localtime(&ltime));
+            timestamp[strlen(timestamp) - 1] = 0;
+            fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_9_clicked (_9 means set meridian treatement)\n", timestamp);
+            fflush(LogFile);
+        }
+#endif
+        doConfirm(bOk, "Are you sure you want to set both the meridian treatment (flip vs stop) AND set the degrees past meridian ?");
+        if(bOk) {
+            if (uiex->isChecked("meridianStop")) {
+                iMeridianBehavior = STOP_AT_POSITION_LIMIT;
+            } else if (uiex->isChecked("meridianFlip")) {
+                iMeridianBehavior = FLIP_AT_POSITION_LIMIT;
+            } else {
+                doMeridianStuff = false;
+            }
+            uiex->propertyInt("merdianDegrees", "value", iMeridianDegrees);
+            if (doMeridianStuff) {
+                nErr = m_iOptronV3.setMeridianTreatement(iMeridianBehavior, iMeridianDegrees);
+                if (nErr) {
+                    snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Error setting meridian treatment : %d", nErr);
+                    uiex->messageBox("Error", szTmpBuf);
+                }
+            }
+        }
+    } else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
+
+	}
     return nErr;
 }
 
@@ -848,6 +987,7 @@ int X2Mount::terminateLink(void)
 #endif
     nErr = m_iOptronV3.Disconnect();
     m_bLinked = false;
+    m_bHasDoneZeroPosition = false;
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {

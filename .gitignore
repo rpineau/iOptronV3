@@ -15,7 +15,4 @@ Release
 .idea/*.xml
 .idea/*.iml
 *.VC.db
-.idea/
-.idea/codeStyles/Project.xml
-.idea/iOptronV3.iml
 *.user
