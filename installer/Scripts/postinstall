@@ -35,10 +35,16 @@ echo "Installing in $PLUGINS_DIR/MountPlugIns/"
 
 cp -f "/tmp/iOptronV3_X2/mountlist iOptronV3.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
 if [ "$?" -ne "0" ]; then exit 1; fi
+
+rm -f "$PLUGINS_DIR/MountPlugIns/iOptronV3.ui"
 cp -f "/tmp/iOptronV3_X2/iOptronV3.ui" "$PLUGINS_DIR/MountPlugIns/"
 if [ "$?" -ne "0" ]; then exit 1; fi
+
+rm -f "$PLUGINS_DIR/MountPlugIns/iOptronV3Conf.ui"
 cp -f "/tmp/iOptronV3_X2/iOptronV3Conf.ui" "$PLUGINS_DIR/MountPlugIns/"
 if [ "$?" -ne "0" ]; then exit 1; fi
+
+rm -f "$PLUGINS_DIR/MountPlugIns/libiOptronV3.dylib"
 cp -f "/tmp/iOptronV3_X2/libiOptronV3.dylib" "$PLUGINS_DIR/MountPlugIns/"
 if [ "$?" -ne "0" ]; then exit 1; fi
 
