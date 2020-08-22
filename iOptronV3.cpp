@@ -1095,6 +1095,114 @@ int CiOptron::setDST(bool bDaylight)
     return nErr;
 }
 
+int CiOptron::getLocation(float &fLat, float &fLong)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szTmp[SERIAL_BUFFER_SIZE];
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getLocation] called \n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+
+    getInfoAndSettings();  // this case we want to be accurate
+    fLat = m_fLat;
+    fLong = m_fLong;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getLocation] finished.  Result: Latitude: %g, Longitude %g, with error code: %i\n", getTimestamp(), fLat, fLong, nErr);
+        fflush(Logfile);
+    }
+#endif
+
+    return nErr;
+}
+
+int CiOptron::setLocation(float fLat, float fLong)
+{
+    int nErr = IOPTRON_OK;
+    char szResp[SERIAL_BUFFER_SIZE];
+    char szCmd[SERIAL_BUFFER_SIZE];
+    unsigned long ulLatToSend;
+    unsigned long ulLongToSend;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] called \n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+
+    //  extracting lat:   m_fLat = ((atof(szTmp)-32400000)*0.01)/ 60.0 /60.0;
+    ulLatToSend = (fLat * 60.0 * 60.0 / 0.01);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Latitude from %f to iOptron value %u\n", getTimestamp(), m_fLat, ulLatToSend);
+        fflush(Logfile);
+    }
+#endif
+
+    //  Command: “:SLAsTTTTTTTT#”
+    //  Response: “1”
+    //  This command sets the current latitude. Valid data range is [-32,400,000, +32,400,000].
+    //  Note: North is positive, and the resolution is 0.01 arc-second.
+
+    snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLA%+09d#", ulLatToSend);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] buffer to send for Lat to mount %s\n", getTimestamp(), szCmd);
+        fflush(Logfile);
+    }
+#endif
+
+    nErr = sendCommand(szCmd, szResp, 1);
+
+    if (atoi(szResp) != 1) {
+        return 1; // meaning error
+    } else {
+        // extracing long:   m_fLong = (atof(szTmp)*0.01)/ 60.0 /60.0;
+        ulLongToSend = (fLong * 60.0 * 60.0 / 0.01);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Longitude from %f to iOptron value %u\n", getTimestamp(), m_fLong, ulLongToSend);
+        fflush(Logfile);
+    }
+#endif
+        //
+        //  Command: “:SLOsTTTTTTTT#”
+        //  Response: “1”
+        //  This command sets the current longitude. Valid data range is [-64,800,000, +64,800,000].
+        //  Note: East is positive, and the resolution is 0.01 arc-second.
+
+        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLO%+09d#", ulLongToSend);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] buffer to send for Long to mount %s\n", getTimestamp(), szCmd);
+        fflush(Logfile);
+    }
+#endif
+        nErr = sendCommand(szCmd, szResp, 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] done, nErr = %i\n", getTimestamp(), nErr);
+        fflush(Logfile);
+    }
+#endif
+
+        return nErr;
+    }
+
+}
+
 int CiOptron::setTimeAndDate(double dJulianDateRightNow)
 {
     int nErr = IOPTRON_OK;
@@ -1285,7 +1393,7 @@ double CiOptron::flipHourAngle() {
 int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
 {
     int nErr = IOPTRON_OK;
-    bool bGPSGood;
+    bool bGPSOrLatLongGood;
     char szCmdRa[SERIAL_BUFFER_SIZE];
     char szCmdDec[SERIAL_BUFFER_SIZE];
     char szResp[SERIAL_BUFFER_SIZE];
@@ -1298,19 +1406,19 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     }
 #endif
 
-    nErr = isGPSGood(bGPSGood);
+    nErr = isGPSOrLatLongGood(bGPSOrLatLongGood);
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error calling isGPSGood.  nErr: %i\n", getTimestamp(), nErr);
+        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error calling isGPSOrLatLongGood.  nErr: %i\n", getTimestamp(), nErr);
         fflush(Logfile);
 #endif
         return nErr;
     }
 
-    if (!bGPSGood) {
+    if (!bGPSOrLatLongGood) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f .. ABORTING due to GPS signal not being good\n", getTimestamp(), dRaInDecimalHours, dDecInDecimalDegrees);
+            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] called Ra: %f and Dec: %f .. ABORTING due to GPS signal not being good OR lat/long not being set properly\n", getTimestamp(), dRaInDecimalHours, dDecInDecimalDegrees);
             fflush(Logfile);
         }
 #endif
@@ -1547,11 +1655,45 @@ int CiOptron::isGPSGood(bool &bGPSGood)
     }
 #endif
 
-    bGPSGood = m_nGPSStatus == GPS_RECEIVING_VALID_DATA;
+    bGPSGood = (m_nGPSStatus == GPS_RECEIVING_VALID_DATA);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", getTimestamp(), bGPSGood?"true":"false");
+        fflush(Logfile);
+    }
+#endif
+    return nErr;
+}
+
+int CiOptron::isGPSOrLatLongGood(bool &bGPSOrLatLongGood)
+{
+    float fLat;
+    float fLong;
+    bool bGPSGood;
+    int nErr = IOPTRON_OK;
+    int nErr2 = IOPTRON_OK;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] called \n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+    nErr = getLocation(fLat, fLong);
+    nErr2 = isGPSGood(bGPSGood); // never returns non-0
+
+    if (nErr) {
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] Error: calling getLocation.  nErr: %i\n", getTimestamp(), nErr);
+        fflush(Logfile);
+#endif
+        return nErr;
+    }
+    bGPSOrLatLongGood = (fLat && (fLat <=90) && (fLat >= -90) && fLong && (fLong <= 180) && (fLong >=-180)) || bGPSGood;
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] end. Result %s \n", getTimestamp(), bGPSOrLatLongGood?"true":"false");
         fflush(Logfile);
     }
 #endif
@@ -1790,11 +1932,11 @@ int CiOptron::getInfoAndSettings()
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp, 9);
-    m_fLong = atof(szTmp);
+    m_fLong = (atof(szTmp)*0.01)/ 60.0 /60.0;
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+9, 8);
-    m_fLat = atof(szTmp)-32400000;
+    m_fLat = ((atof(szTmp)-32400000)*0.01)/ 60.0 /60.0;
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+17, 1);
@@ -1814,7 +1956,7 @@ int CiOptron::getInfoAndSettings()
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS lat is : %f, GPS long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", getTimestamp(), (m_fLat*0.01)/ 60.0 /60.0 , (m_fLong*0.01)/ 60.0 /60.0 , m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
+        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  MOUNT lat is : %f, MOUNT long is: %f, status is: %i, trackingRate is: %i, gpsStatus is: %i, timeSource is: %i\n", getTimestamp(), m_fLat , m_fLong , m_nStatus, m_nTrackingRate, m_nGPSStatus, m_nTimeSource);
         fflush(Logfile);
     }
 #endif
