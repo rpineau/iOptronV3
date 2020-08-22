@@ -100,6 +100,7 @@ public:
     int setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, double dDecInDecimalDegrees);
     int syncTo(double dRa, double dDec);
     int isGPSGood(bool &bGPSGood);
+    int isGPSOrLatLongGood(bool &bGPSOrLatLongGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
     int getTimeSource(char *timeSourceString, unsigned int strMaxLen);
     int getSystemStatusPassive(char *strSystemStatus, unsigned int strMaxLen);
@@ -139,6 +140,8 @@ public:
     int setUtcOffset(char *pszUtcOffsetInMins);
     int getDST(bool &bDaylight);
     int setDST(bool bDaylight);
+    int getLocation(float &fLat, float &fLong);
+    int setLocation(float fLat, float fLong);
     int setTimeAndDate(double julianDateOfUTCTimeIncludingMillis);
 
     int getMeridianTreatment(int &iBehavior, int &iDegreesPastMeridian);

@@ -237,14 +237,18 @@ int X2Mount::execModalSettingsDialog(void)
     char szUtcOffsetReadInMins[SERIAL_BUFFER_SIZE];
     char szSystemStatus[SERIAL_BUFFER_SIZE];
     char szTrackingRate[SERIAL_BUFFER_SIZE];
+    char szLatLong[SERIAL_BUFFER_SIZE];
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
     bool bAtZero = false;
     bool bAtParked = false;
     bool bOkToSlew = false;
+    bool bGPSOrLatLongGood = false;
     double dParkAz, dParkAlt;
     int iAutoDateTime;
     int iBehavior, iDegreesPastMeridian;
     int iDegreesAltLimit;
+    float fLat;
+    float fLong;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -267,7 +271,7 @@ int X2Mount::execModalSettingsDialog(void)
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
-		dx->setEnabled("pushButton_7", false);  // set location from TSX->mount
+		dx->setEnabled("pushButton_7", true);  // set location from TSX->mount
 		dx->setEnabled("pushButton_6", true);  // set time/date/timezone from TSX->mount
 		dx->setEnabled("autoDateTime", true);		// set date/time on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
@@ -282,7 +286,8 @@ int X2Mount::execModalSettingsDialog(void)
 
         m_iOptronV3.getGPSStatusString(szGPSStatus, SERIAL_BUFFER_SIZE);
         dx->setText("label_kv_1", szGPSStatus);
-        if (!strcmp(szGPSStatus, "Working Data Valid")) {
+        m_iOptronV3.isGPSOrLatLongGood(bGPSOrLatLongGood);
+        if (bGPSOrLatLongGood) {
             dx->setChecked("checkBox_gps_good", 1);
         }
         m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
@@ -350,12 +355,17 @@ int X2Mount::execModalSettingsDialog(void)
             dx->setText("calculator_concl", "Do Not Slew");
             dx->setPropertyString("calculator_concl", "styleSheet", "color:  #ff0040;");
         }
+
+        // set lat/long in interface
+        m_iOptronV3.getLocation(fLat, fLong);
+        snprintf(szLatLong, SERIAL_BUFFER_SIZE, "%f/%f", fLat, fLong);
+        dx->setText("label_lat_long_4", szLatLong);
     }
     else {
         dx->setEnabled("parkAz", false);
         dx->setEnabled("parkAlt", false);
-		dx->setEnabled("pushButton_7", false);  // set location and timezone from TSX->mount
-		dx->setEnabled("pushButton_6", false);  // set time from TSX->mount
+		dx->setEnabled("pushButton_7", false);  // set location from TSX->mount
+		dx->setEnabled("pushButton_6", false);  // set time/date/timezone from TSX->mount
 		dx->setEnabled("autoDateTime", false);	// set time and location data on connect
         dx->setEnabled("pushButton_2", false); // parked button
         dx->setEnabled("pushButton_3", false); // goto zero button
@@ -579,6 +589,7 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bOk = false;
     bool bInDST = true;  // most of the time its summer when we observe the heavens
+    bool bIsGPSGood = false;  // we check GPS
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -611,11 +622,16 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 			fflush(LogFile);
 		}
 #endif
-		doConfirm(bOk, "Are you sure you want to send the location from TheSkyX to the mount?  This is generally not recommended as you should merely wait for the GPS to resolve this more accurately.  GPS on mount usually takes about 8-10 minutes and antenna needs to be connected.");
+        m_iOptronV3.isGPSGood(bIsGPSGood);
+	    if (bIsGPSGood) {
+            doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  This will overwrite the GPS that was acquired.");
+	    } else {
+            doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  If the GPS gets acquired, this will be overwritten.");
+	    }
+
 		if(bOk) {
 			// TSX longitude is + going west and - going east, so passing the opposite
-			// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
-			// nErr |= m_iOptronV3.setTimeZone(m_pTheSkyXForMounts->timeZone());
+			 nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->latitude(), - m_pTheSkyXForMounts->longitude());
 			if(nErr) {
 				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location: %d", nErr);
 				uiex->messageBox("Error",szTmpBuf);
@@ -632,12 +648,12 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 			fflush(LogFile);
 		}
 #endif
-		doConfirm(bOk, "Are you sure you want to send the time, timezone, UTC offset, and date from TheSkyX to the mount ?");
+		doConfirm(bOk, "Are you sure you want to send the time, timezone, UTC offset, and date from TheSky to the mount ?");
 		if(bOk) {
 
             nErr = inDaylightTime(bInDST);
             if(nErr) {
-                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error calculating DST from TheSkyX : %d", nErr);
+                snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error calculating DST from TheSky : %d", nErr);
                 uiex->messageBox("Error",szTmpBuf);
             } else {
                 //
@@ -856,9 +872,6 @@ int X2Mount::establishLink(void)
     }
 
 	if(m_bLinked && m_bSetAutoTimeData) {
-	    // dont set location yet.. rely on GPS and someday provide alternative in case people's GPS goes bad
-		// TSX longitude is + going west and - going east, so passing the opposite
-		// nErr = m_iOptronV3.setLocation(- m_pTheSkyXForMounts->longitude(), m_pTheSkyXForMounts->latitude());
 
         nErr = inDaylightTime(bInDST);
         if (!nErr) {
@@ -918,6 +931,22 @@ int X2Mount::establishLink(void)
                             fflush(LogFile);
                         }
                         #endif
+                    } else {
+                        // TSX longitude is + going west and - going east, so passing the opposite
+                        nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->latitude(), - m_pTheSkyXForMounts->longitude());
+                        if (nErr) {
+                            #ifdef IOPTRON_X2_DEBUG
+                            if (LogFile) {
+                                ltime = time(NULL);
+                                timestamp = asctime(localtime(&ltime));
+                                timestamp[strlen(timestamp) - 1] = 0;
+                                fprintf(LogFile,
+                                        "[%s] X2Mount::establishLink Error setting lat/long on mount : %g / %g.  UTC offset, DST, and date/time were indeed successfully set.\n",
+                                        timestamp, m_pTheSkyXForMounts->latitude(), -m_pTheSkyXForMounts->longitude());
+                                fflush(LogFile);
+                            }
+                            #endif
+                        }
                     }
                 }
             }
@@ -1262,7 +1291,7 @@ bool X2Mount::isSynced(void)
 
     X2MutexLocker ml(GetMutex());
 
-   nErr = m_iOptronV3.isGPSGood(m_bSynced);
+   nErr = m_iOptronV3.isGPSOrLatLongGood(m_bSynced);
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -1271,7 +1300,7 @@ bool X2Mount::isSynced(void)
         timestamp[strlen(timestamp) - 1] = 0;
         fprintf(LogFile, "[%s] isSynced Called : m_bSynced = %s\n", timestamp, m_bSynced?"true":"false");
         if (nErr)
-            fprintf(LogFile, "[%s] isSynced ERROR nErr = %d \n", timestamp, nErr);
+            fprintf(LogFile, "[%s] isSynced ERROR calling isGPSOrLatLongGood nErr = %d \n", timestamp, nErr);
         fflush(LogFile);
     }
 #endif
