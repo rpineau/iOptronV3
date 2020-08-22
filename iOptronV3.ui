@@ -175,7 +175,7 @@
        <property name="font">
         <font>
          <pointsize>10</pointsize>
-         <weight>30</weight>
+         <weight>50</weight>
          <bold>false</bold>
         </font>
        </property>
@@ -183,7 +183,7 @@
         <string>-----/-----</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignLeft|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_utc_good">
@@ -903,7 +903,7 @@ p, li { white-space: pre-wrap; }
       <property name="font">
        <font>
         <pointsize>10</pointsize>
-        <weight>10</weight>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
