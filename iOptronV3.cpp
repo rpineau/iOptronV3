@@ -359,6 +359,12 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if (strcmp(szResp, IEQ30PRO) == 0) {
         strncpy(model, "iEQ30 Pro", strMaxLen);
         strncpy(m_sModel, IEQ30PRO, 5);
+    } else if (strcmp(szResp, CEM70) == 0) {
+        strncpy(model, "CEM70", strMaxLen);
+        strncpy(m_sModel, CEM70, 5);
+    } else if (strcmp(szResp, CEM70_G) == 0) {
+        strncpy(model, "CEM70_G", strMaxLen);
+        strncpy(m_sModel, CEM70_G, 5);
     } else if (strcmp(szResp, CEM60) == 0) {
         strncpy(model, "CEM60", strMaxLen);
         strncpy(m_sModel, CEM60, 5);

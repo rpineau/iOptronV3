@@ -38,6 +38,8 @@ enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD
 #define IEQ30PRO  "0030"
 #define CEM60  "0060"
 #define CEM60_EC  "0061"
+#define CEM70  "0070"
+#define CEM70_G  "0071"
 #define CEM120  "0120"
 #define CEM120_EC  "0121"
 #define CEM120_EC2  "0122"
