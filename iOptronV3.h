@@ -29,6 +29,8 @@
 
 // #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
+#define DRIVER_VERSION 1.21
+
 enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD_RESPONSE, COMMAND_FAILED, IOPTRON_ERROR};
 // Response: “0010”, “0011”, “0025”, “0026”, “0030”, “0045”, “0060”, “0061”, “0120” “0121”, “0122”, “5010”, “5035”, “5045”
 // This command gets the mount model. “0010” means Cube II EQ mode, “0011” means SmartEQ Pro+, “0025” means CEM25(/P), “0026” means CEM25-EC,

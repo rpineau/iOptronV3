@@ -1,3 +1,4 @@
 //See hardwarelist.txt for details on this file format.
 //Version|Manufacturer|Model|Comment|MapsTo|PlugInDllName|X2Developer|Windows|Mac|Linux|
 2|iOptron|CEM120xx V3 |X2 plugin for iOptron V3 CEM120 Mount controller| |libiOptronV3|Eric Roubal && RTI-Zone |1|1|1|
+2|iOptron|CEM70xx V3 |X2 plugin for iOptron V3 CEM70 Mount controller| |libiOptronV3|Eric Roubal && RTI-Zone |1|1|1|
