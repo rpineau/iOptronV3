@@ -40,14 +40,22 @@ DirExistsWarning=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Dirs]
+Name: "{app}\Plugins\MountPlugIns";
+Name: "{app}\Plugins64\MountPlugIns";
+
 [Files]
-; WIll also need to customise these!
-Source: "mountlist iOptronV3.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
-Source: "libiOptronV3\Release\libiOptronV3.dll"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
-Source: "iOptronV3.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
-Source: "iOptronV3Conf.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-; msgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO)
+Source: "mountlist iOptronV3.txt";                      DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
+Source: "mountlist iOptronV3.txt";                      DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion; DestName: "mountlist64 iOptronV3.txt"
+; 32 bits
+Source: "libiOptronV3\Win32\Release\libiOptronV3.dll";  DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+Source: "iOptronV3.ui";                                 DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+Source: "iOptronV3Conf.ui";                             DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+; 64 bits
+Source: "libiOptronV3\x64\Release\libiOptronV3.dll";    DestDir: "{app}\Plugins64\MountPlugIns"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\MountPlugIns'))
+Source: "iOptronV3.ui";                                 DestDir: "{app}\Plugins64\MountPlugIns"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\MountPlugIns'))
+Source: "iOptronV3Conf.ui";                             DestDir: "{app}\Plugins64\MountPlugIns"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\MountPlugIns'))
+
 
 [Code]
 {* Below are functions to read TheSkyXInstallPath.txt and confirm that the directory does exist
