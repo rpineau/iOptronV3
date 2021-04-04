@@ -26,8 +26,10 @@ CiOptron::CiOptron() {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
 void CiOptron::setLogFile(FILE *daFile) {
     Logfile = daFile;
-    fprintf(Logfile, "[%s] IOPTRON setLogFile Called\n", getTimestamp());
-    fflush(Logfile);
+    if (Logfile) {
+        fprintf(Logfile, "[%s] IOPTRON setLogFile Called\n", getTimestamp());
+        fflush(Logfile);
+    }
 }
 #endif
 
@@ -336,7 +338,6 @@ int CiOptron::readResponse(char *szRespBuffer, int nBytesToRead)
 }
 
 
-
 #pragma mark - mount controller informations
 int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
 {
@@ -359,6 +360,24 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if (strcmp(szResp, IEQ30PRO) == 0) {
         strncpy(model, "iEQ30 Pro", strMaxLen);
         strncpy(m_sModel, IEQ30PRO, 5);
+    } else if (strcmp(szResp, CEM26) == 0) {
+        strncpy(model, "CEM26", strMaxLen);
+        strncpy(m_sModel, CEM26, 5);
+    } else if (strcmp(szResp, CEM26_EC) == 0) {
+        strncpy(model, "CEM26-EC", strMaxLen);
+        strncpy(m_sModel, CEM26_EC, 5);
+    } else if (strcmp(szResp, GEM28) == 0) {
+        strncpy(model, "GEM28", strMaxLen);
+        strncpy(m_sModel, GEM28, 5);
+    } else if (strcmp(szResp, GEM28_EC) == 0) {
+        strncpy(model, "GEM28-EC", strMaxLen);
+        strncpy(m_sModel, GEM28_EC, 5);
+    } else if (strcmp(szResp, CEM70) == 0) {
+        strncpy(model, "CEM70(G)", strMaxLen);
+        strncpy(m_sModel, CEM70, 5);
+    } else if (strcmp(szResp, CEM70_EC) == 0) {
+        strncpy(model, "CEM70(G)-EC", strMaxLen);
+        strncpy(m_sModel, CEM70_EC, 5);
     } else if (strcmp(szResp, CEM60) == 0) {
         strncpy(model, "CEM60", strMaxLen);
         strncpy(m_sModel, CEM60, 5);
@@ -378,7 +397,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
         strncpy(model, "Unsupported Mount", strMaxLen);
         strncpy(m_sModel, UKNOWN_MOUNT, 5);
     }
-     return nErr;
+    return nErr;
 }
 
 
@@ -705,8 +724,10 @@ int CiOptron::getTrackRates(bool &bTrackingOn, double &dTrackRaArcSecPerSec, dou
     double fRa = m_fCustomRaMultiplier;  // initialize with cached value
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called.\n", getTimestamp());
-    fflush(Logfile);
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getTrackRates] called.\n", getTimestamp());
+        fflush(Logfile);
+    }
 #endif
     memset(szResp, 0, SERIAL_BUFFER_SIZE);
 
@@ -1482,8 +1503,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         nErr = sendCommand(":MS2#", szResp, 1);
         #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (nErr) {
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2.  nErr: %i\n", getTimestamp(), nErr);
-            fflush(Logfile);
+            if (Logfile) {
+                fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2.  nErr: %i\n", getTimestamp(), nErr);
+                fflush(Logfile);
+            }
         }
         #endif
     } else if (m_nCacheLimitStatus == LIMITS_EXCEEDED_OR_BELOW_ALTITUDE) {
@@ -1501,8 +1524,10 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_ONE_OPTION) {
         #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         //        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount even though it told me it only had one position to go to.  Gettn out of dodge.\n", getTimestamp());
-        fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount likely due to limit issues.  Gettn out of dodge.\n", getTimestamp());
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount likely due to limit issues.  Gettn out of dodge.\n", getTimestamp());
+            fflush(Logfile);
+        }
         #endif
         return ERR_LIMITSEXCEEDED;  // regular slew to a place that is bad for mount
     } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE && m_nCacheLimitStatus == NO_ISSUE_SLEW_TRACK_TWO_OPTIONS) {
@@ -1518,14 +1543,18 @@ int CiOptron::startSlewTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
         nErr = sendCommand(":MS1#", szResp, 1);
         if (nErr) {
             #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2 then :MS1  nErr: %i\n", getTimestamp(), nErr);
-            fflush(Logfile);
+            if (Logfile) {
+                fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: sendCommand bombed sending :MS2 then :MS1  nErr: %i\n", getTimestamp(), nErr);
+                fflush(Logfile);
+            }
             #endif
             return nErr;
         } else if (atoi(szResp) == SLEW_EXCEED_LIMIT_OR_BELOW_ALTITUDE) {
             #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-            fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount after attempting to slew to counterweight up option.  (:MS2 then :MS1).  Gettn out of dodge.\n", getTimestamp());
-            fflush(Logfile);
+            if (Logfile) {
+                fprintf(Logfile, "[%s] [CiOptron::startSlewTo] Error: Slewing to normal position was rejected by mount after attempting to slew to counterweight up option.  (:MS2 then :MS1).  Gettn out of dodge.\n", getTimestamp());
+                fflush(Logfile);
+            }
             #endif
             return ERR_LIMITSEXCEEDED;
         } else {
@@ -1574,15 +1603,19 @@ int CiOptron::endSlewTo()
             nErr = sendCommand(":MS1#", szResp, 1);
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
             if (nErr) {
-                fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: sendCommand bombed sending :MS1 with value nErr: %i.  Gettn out of dodge.\n", getTimestamp(), nErr);
-                fflush(Logfile);
+                if (Logfile) {
+                    fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: sendCommand bombed sending :MS1 with value nErr: %i.  Gettn out of dodge.\n", getTimestamp(), nErr);
+                    fflush(Logfile);
+                }
                 return nErr;
             }
 #endif
             if (atoi(szResp) == 0) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-                fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: reslewing to 'normal' counterweight down position gave me a '0' back (The desired object is below the altitude limit or exceed the mechanical limits.).  Gettn out of dodge.\n", getTimestamp());
-                fflush(Logfile);
+                if (Logfile) {
+                    fprintf(Logfile, "[%s] [CiOptron::endSlewTo] Error: reslewing to 'normal' counterweight down position gave me a '0' back (The desired object is below the altitude limit or exceed the mechanical limits.).  Gettn out of dodge.\n", getTimestamp());
+                    fflush(Logfile);
+                }
 #endif
                 nErr = ERR_LIMITSEXCEEDED;  // all is lost
             } else {
@@ -1684,8 +1717,10 @@ int CiOptron::isGPSOrLatLongGood(bool &bGPSOrLatLongGood)
 
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] Error: calling getLocation.  nErr: %i\n", getTimestamp(), nErr);
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] Error: calling getLocation.  nErr: %i\n", getTimestamp(), nErr);
+            fflush(Logfile);
+        }
 #endif
         return nErr;
     }
@@ -1730,8 +1765,10 @@ int CiOptron::setParkPosition(double dAz, double dAlt)
 //    dAzArcSec = (dAz * 60 * 60) / 0.01;   wrong!
     dAzArcSec = ((dAz / 24.0 * 360.0) * 60.0 * 60.0) / 0.01;  // actually hundreths of arc sec
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Az to : %d\n", getTimestamp(), int(dAzArcSec));
-    fflush(Logfile);
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::setParkPosition] setting  Park Az to : %d\n", getTimestamp(), int(dAzArcSec));
+        fflush(Logfile);
+    }
 #endif
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SPA%09d#", int(dAzArcSec));
     nErr = sendCommand(szCmd, szResp, 1);
@@ -1991,8 +2028,10 @@ int CiOptron::setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, do
     nErr = sendCommand(szCmdRa, szResp, 1); // set RA
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdRa, nErr);
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdRa, nErr);
+            fflush(Logfile);
+        }
 #endif
         return nErr;
     }
@@ -2011,8 +2050,10 @@ int CiOptron::setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, do
     nErr = sendCommand(szCmdDec, szResp, 1);  // set DEC
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdDec, nErr);
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] [%s] Error: sendCommand bombed sending %s.  nErr: %i\n", getTimestamp(), pszLocationCalling, szCmdDec, nErr);
+            fflush(Logfile);
+        }
 #endif
         return nErr;
     }
@@ -2132,8 +2173,10 @@ int CiOptron::setMeridianTreatement(int iBehavior, int iDegreesPastMeridian)
     nErr = sendCommand(szCmd, szResp, 1);  // set meridian treatment
     if (nErr) {
         #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] Error: sendCommand for setting meridian treatment bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] Error: sendCommand for setting meridian treatment bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
+            fflush(Logfile);
+        }
         #endif
         return nErr;
     }
@@ -2165,8 +2208,10 @@ int CiOptron::setAltitudeLimit(int iDegreesAltLimit)
     nErr = sendCommand(szCmd, szResp, 1);  // set altitude limit
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-        fprintf(Logfile, "[%s] Error: sendCommand for setting altitude limit bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
-        fflush(Logfile);
+        if (Logfile) {
+            fprintf(Logfile, "[%s] Error: sendCommand for setting altitude limit bombed: command was: %s. nErr: %i\n", getTimestamp(), szCmd, nErr);
+            fflush(Logfile);
+        }
 #endif
         return nErr;
     }
