@@ -338,7 +338,6 @@ int CiOptron::readResponse(char *szRespBuffer, int nBytesToRead)
 }
 
 
-
 #pragma mark - mount controller informations
 int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
 {
@@ -361,12 +360,24 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     if (strcmp(szResp, IEQ30PRO) == 0) {
         strncpy(model, "iEQ30 Pro", strMaxLen);
         strncpy(m_sModel, IEQ30PRO, 5);
+    } else if (strcmp(szResp, CEM26) == 0) {
+        strncpy(model, "CEM26", strMaxLen);
+        strncpy(m_sModel, CEM26, 5);
+    } else if (strcmp(szResp, CEM26_EC) == 0) {
+        strncpy(model, "CEM26-EC", strMaxLen);
+        strncpy(m_sModel, CEM26_EC, 5);
+    } else if (strcmp(szResp, GEM28) == 0) {
+        strncpy(model, "GEM28", strMaxLen);
+        strncpy(m_sModel, GEM28, 5);
+    } else if (strcmp(szResp, GEM28_EC) == 0) {
+        strncpy(model, "GEM28-EC", strMaxLen);
+        strncpy(m_sModel, GEM28_EC, 5);
     } else if (strcmp(szResp, CEM70) == 0) {
-        strncpy(model, "CEM70", strMaxLen);
+        strncpy(model, "CEM70(G)", strMaxLen);
         strncpy(m_sModel, CEM70, 5);
-    } else if (strcmp(szResp, CEM70_G) == 0) {
-        strncpy(model, "CEM70_G", strMaxLen);
-        strncpy(m_sModel, CEM70_G, 5);
+    } else if (strcmp(szResp, CEM70_EC) == 0) {
+        strncpy(model, "CEM70(G)-EC", strMaxLen);
+        strncpy(m_sModel, CEM70_EC, 5);
     } else if (strcmp(szResp, CEM60) == 0) {
         strncpy(model, "CEM60", strMaxLen);
         strncpy(m_sModel, CEM60, 5);
@@ -386,7 +397,7 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
         strncpy(model, "Unsupported Mount", strMaxLen);
         strncpy(m_sModel, UKNOWN_MOUNT, 5);
     }
-     return nErr;
+    return nErr;
 }
 
 
