@@ -400,6 +400,13 @@ int CiOptron::getMountInfo(char *model, unsigned int strMaxLen)
     return nErr;
 }
 
+int CiOptron::mountHasFunctioningGPSPassive(bool &bMountHasFunctioningGPS) {
+
+    int nErr = IOPTRON_OK;
+
+    bMountHasFunctioningGPS = (m_nGPSStatus != GPS_BROKE_OR_MISSING);
+    return nErr;
+}
 
 int CiOptron::getFirmwareVersion(char *pszVersion, unsigned int nStrMaxLen)
 {
@@ -866,7 +873,7 @@ int CiOptron::gotoZeroPosition() {
 
 }
 
-int CiOptron::getAtZeroPosition(bool &bAtZero) {
+int CiOptron::getAtZeroPositionPassive(bool &bAtZero) {
     // special call which is used by UI.. and we've assumed getInfoAndSettings() already called for other UI elements
     bAtZero = m_nStatus == HOMED;
     return IOPTRON_OK;
@@ -973,29 +980,35 @@ int CiOptron::findZeroPosition() {
 
 }
 
-int CiOptron::getUtcOffset(char *pszUtcOffsetInMins)
+int CiOptron::getUtcOffsetAndDST(char *pszUtcOffsetInMins, bool &bDaylight)
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
+    char szTmp[SERIAL_BUFFER_SIZE];
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] called \n", getTimestamp());
+        fprintf(Logfile, "[%s] [CiOptron::getUtcOffsetAndDST] called \n", getTimestamp());
         fflush(Logfile);
     }
 #endif
 
     // Get time related info
     nErr = sendCommand(":GUT#", szResp, 19);
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getUtcOffset] finished.  nErr = %i, Result: %s\n", getTimestamp(), nErr, szResp);
-        fflush(Logfile);
-    }
-#endif
 
     memset(pszUtcOffsetInMins,0, SERIAL_BUFFER_SIZE);
     memcpy(pszUtcOffsetInMins, szResp, 4);
+
+    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp+4, 1);
+    bDaylight = (atoi(szTmp) == 1);
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getUtcOffsetAndDST] finished.  nErr = %i, Command Result: %s, utcOffsetInMins: %s, daylight: %s\n", getTimestamp(), nErr, szResp, pszUtcOffsetInMins, bDaylight?"true":"false");
+        fflush(Logfile);
+    }
+#endif
 
     return nErr;
 }
@@ -1032,43 +1045,6 @@ int CiOptron::setUtcOffset(char *pszUtcOffsetInMins)
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setUtcOffset] done, nErr = %i\n", getTimestamp(), nErr);
-        fflush(Logfile);
-    }
-#endif
-
-    return nErr;
-}
-
-int CiOptron::getDST(bool &bDaylight)
-{
-    int nErr = IOPTRON_OK;
-    char szResp[SERIAL_BUFFER_SIZE];
-    char szTmp[SERIAL_BUFFER_SIZE];
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getDST] called \n", getTimestamp());
-        fflush(Logfile);
-    }
-#endif
-
-    // Get time related info
-    nErr = sendCommand(":GUT#", szResp, 19);
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getDST] send of :GUT# finished.  Result: %s\n", getTimestamp(), szResp);
-        fflush(Logfile);
-    }
-#endif
-
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp, szResp+4, 1);
-    bDaylight = (atoi(szTmp) == 1);
-
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
-    if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getDST] finished.  Result: %s with error code: %i\n", getTimestamp(), bDaylight ?"true":"false", nErr);
         fflush(Logfile);
     }
 #endif
@@ -1116,7 +1092,7 @@ int CiOptron::setDST(bool bDaylight)
     return nErr;
 }
 
-int CiOptron::getLocation(float &fLat, float &fLong)
+int CiOptron::getLocation(float &fLat, float &fLong) // make passive version
 {
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
@@ -1130,8 +1106,7 @@ int CiOptron::getLocation(float &fLat, float &fLong)
 #endif
 
     getInfoAndSettings();  // this case we want to be accurate
-    fLat = m_fLat;
-    fLong = m_fLong;
+    getLocationPassive(fLat, fLong); // no way error would have been returned
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
@@ -1139,6 +1114,16 @@ int CiOptron::getLocation(float &fLat, float &fLong)
         fflush(Logfile);
     }
 #endif
+
+    return nErr;
+}
+
+int CiOptron::getLocationPassive(float &fLat, float &fLong)
+{
+    int nErr = IOPTRON_OK;
+
+    fLat = m_fLat;
+    fLong = m_fLong;
 
     return nErr;
 }
@@ -1270,10 +1255,18 @@ int CiOptron::setTimeAndDate(double dJulianDateRightNow)
 }
 
 
-int CiOptron::getGPSStatusString(char *gpsStatus, unsigned int strMaxLen)
+int CiOptron::getGPSStatusString(char *gpsStatus, unsigned int strMaxLen) // make passive version
 {
     int nErr = IOPTRON_OK;
     getInfoAndSettings();  // this case we want to be accurate
+
+    getGPSStatusStringPassive(gpsStatus, strMaxLen);
+    return nErr;
+}
+
+int CiOptron::getGPSStatusStringPassive(char *gpsStatus, unsigned int strMaxLen) {
+
+    int nErr = IOPTRON_OK;
     switch(m_nGPSStatus){
         case GPS_BROKE_OR_MISSING:
             strncpy(gpsStatus, "Broke or Missing", strMaxLen);
@@ -1292,6 +1285,13 @@ int CiOptron::getTimeSource(char *timeSourceString, unsigned int strMaxLen)
 {
     int nErr = IOPTRON_OK;
     getInfoAndSettings();  // this case we want to be accurate
+    getTimeSourcePassive(timeSourceString, strMaxLen);
+    return nErr;
+}
+
+int CiOptron::getTimeSourcePassive(char *timeSourceString, unsigned int strMaxLen)
+{
+    int nErr = IOPTRON_OK;
     switch(m_nTimeSource){
         case TIME_SRC_UNKNOWN:
             strncpy(timeSourceString, "Uknown or Missing", strMaxLen);
@@ -1678,21 +1678,21 @@ int CiOptron::isSlewToComplete(bool &bComplete)
     return nErr;
 }
 
-int CiOptron::isGPSGood(bool &bGPSGood)
+int CiOptron::isGPSReceivingDataPassive(bool &bGPSReceivingData)
 {
     int nErr = IOPTRON_OK;
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::isGPSGood] called \n", getTimestamp());
+        fprintf(Logfile, "[%s] [CiOptron::isGPSReceivingDataPassive] called \n", getTimestamp());
         fflush(Logfile);
     }
 #endif
 
-    bGPSGood = (m_nGPSStatus == GPS_RECEIVING_VALID_DATA);
+    bGPSReceivingData = (m_nGPSStatus == GPS_RECEIVING_VALID_DATA);
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::isGPSGood] end. Result %s \n", getTimestamp(), bGPSGood?"true":"false");
+        fprintf(Logfile, "[%s] [CiOptron::isGPSReceivingDataPassive] end. Result %s \n", getTimestamp(), bGPSReceivingData?"true":"false");
         fflush(Logfile);
     }
 #endif
@@ -1705,30 +1705,63 @@ int CiOptron::isGPSOrLatLongGood(bool &bGPSOrLatLongGood)
     float fLong;
     bool bGPSGood;
     int nErr = IOPTRON_OK;
-    int nErr2 = IOPTRON_OK;
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] called \n", getTimestamp());
         fflush(Logfile);
     }
 #endif
-    nErr = getLocation(fLat, fLong);
-    nErr2 = isGPSGood(bGPSGood); // never returns non-0
+    getInfoAndSettings();
+    nErr = isGPSOrLatLongGoodPassive(bGPSOrLatLongGood);
 
     if (nErr) {
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
         if (Logfile) {
-            fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] Error: calling getLocation.  nErr: %i\n", getTimestamp(), nErr);
+            fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] Error: calling isGPSOrLatLongGoodPassive.  nErr: %i\n", getTimestamp(), nErr);
             fflush(Logfile);
         }
 #endif
         return nErr;
     }
-    bGPSOrLatLongGood = (fLat && (fLat <=90) && (fLat >= -90) && fLong && (fLong <= 180) && (fLong >=-180)) || bGPSGood;
 
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGood] end. Result %s \n", getTimestamp(), bGPSOrLatLongGood?"true":"false");
+        fflush(Logfile);
+    }
+#endif
+    return nErr;
+}
+
+int CiOptron::isGPSOrLatLongGoodPassive(bool &bGPSOrLatLongGood)
+{
+    float fLat;
+    float fLong;
+    bool bGPSReceivingData;
+    int nErr = IOPTRON_OK;
+    int nErr2 = IOPTRON_OK;
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGoodPassive] called \n", getTimestamp());
+        fflush(Logfile);
+    }
+#endif
+    nErr = getLocationPassive(fLat, fLong);
+    nErr = isGPSReceivingDataPassive(bGPSReceivingData);
+
+    // determine if mount supports GPS and make determinations based on that
+    bool bMountHasFunctioningGPS;
+    mountHasFunctioningGPSPassive(bMountHasFunctioningGPS); // ignore error since never will err out
+
+    if (bMountHasFunctioningGPS) {
+        bGPSOrLatLongGood = (fLat && (fLat <=90) && (fLat >= -90) && fLong && (fLong <= 180) && (fLong >=-180)) || bGPSReceivingData;
+    } else {
+        bGPSOrLatLongGood = (fLat && (fLat <=90) && (fLat >= -90) && fLong && (fLong <= 180) && (fLong >=-180));
+    }
+
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::isGPSOrLatLongGoodPassive] end. Result %s \n", getTimestamp(), bGPSOrLatLongGood?"true":"false");
         fflush(Logfile);
     }
 #endif
@@ -1977,6 +2010,12 @@ int CiOptron::getInfoAndSettings()
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp+17, 1);
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+    if (Logfile) {
+        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS status from mount returned is: %s, \n", szTmp);
+        fflush(Logfile);
+    }
+#endif
     m_nGPSStatus = atoi(szTmp);
 
     memset(szTmp,0, SERIAL_BUFFER_SIZE);

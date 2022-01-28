@@ -29,13 +29,9 @@
 
 // #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
-#define DRIVER_VERSION 1.3
+#define DRIVER_VERSION 1.4
 
 enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD_RESPONSE, COMMAND_FAILED, IOPTRON_ERROR};
-// Response: “0010”, “0011”, “0025”, “0026”, “0030”, “0045”, “0060”, “0061”, “0120” “0121”, “0122”, “5010”, “5035”, “5045”
-// This command gets the mount model. “0010” means Cube II EQ mode, “0011” means SmartEQ Pro+, “0025” means CEM25(/P), “0026” means CEM25-EC,
-// “0030” means iEQ30 Pro, “0045” means iEQ45 Pro EQ mode, “0060” means CEM60, “0061” means CEM60-EC, “0120” means CEM120, “0121” means CEM120-EC,
-// “0122” means CEM120-EC2, “5010” means Cube II AA mode, “5035” means AZ Mount Pro, “5045” means iEQ45 Pro AA mode.
 
 #define CEM26 "0026"
 #define CEM26_EC "0027"
@@ -50,6 +46,9 @@ enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD
 #define CEM120_EC  "0121"
 #define CEM120_EC2  "0122"
 #define UKNOWN_MOUNT "9999"
+
+#define NUM_OF_OPTIONAL_GPS_MOUNTS 4
+const char* OPTIONAL_GPS_MOUNTS[NUM_OF_OPTIONAL_GPS_MOUNTS] = { CEM26, CEM26_EC, GEM28, GEM28_EC };
 
 enum iOptronStatus {STOPPED = 0, TRACKING, SLEWING, GUIDING, FLIPPING, PEC_TRACKING, PARKED, HOMED};
 
@@ -107,10 +106,14 @@ public:
     int getRaAndDec(double &dRa, double &dDec, bool bForceMountCall);
     int setRaAndDec(char *pszLocationCalling, double dRaInDecimalHours, double dDecInDecimalDegrees);
     int syncTo(double dRa, double dDec);
-    int isGPSGood(bool &bGPSGood);
+    int isGPSReceivingDataPassive(bool &bGPSReceivingData);
+    int mountHasFunctioningGPSPassive(bool &bMountHasFunctioningGPS);
     int isGPSOrLatLongGood(bool &bGPSOrLatLongGood);
+    int isGPSOrLatLongGoodPassive(bool &bGPSOrLatLongGood);
     int getGPSStatusString(char *gpsStatus, unsigned int strMaxLen);
+    int getGPSStatusStringPassive(char *gpsStatus, unsigned int strMaxLen);
     int getTimeSource(char *timeSourceString, unsigned int strMaxLen);
+    int getTimeSourcePassive(char *timeSourceString, unsigned int strMaxLen);
     int getSystemStatusPassive(char *strSystemStatus, unsigned int strMaxLen);
 
     int setTrackingRates(bool bTrackingOn, bool bIgnoreRates, double dRaRateArcSecPerSec, double dDecRateArcSecPerSec);
@@ -140,15 +143,15 @@ public:
     int Abort();
 
     int gotoZeroPosition();
-    int getAtZeroPosition(bool &bAtZero);
+    int getAtZeroPositionPassive(bool &bAtZero);
     int getAtParkedPositionPassive(bool &bAtParked);
     int gotoFlatsPosition();
     int findZeroPosition();
-    int getUtcOffset(char *pszUtcOffsetInMins);
     int setUtcOffset(char *pszUtcOffsetInMins);
-    int getDST(bool &bDaylight);
     int setDST(bool bDaylight);
+    int getUtcOffsetAndDST(char *pszUtcOffsetInMins, bool &bDaylight);
     int getLocation(float &fLat, float &fLong);
+    int getLocationPassive(float &fLat, float &fLong);
     int setLocation(float fLat, float fLong);
     int setTimeAndDate(double julianDateOfUTCTimeIncludingMillis);
 
@@ -156,6 +159,8 @@ public:
     int getAltitudeLimit(int &iDegreesAltLimit);
     int setMeridianTreatement(int iBehavior, int iDegreesPastMeridian);
     int setAltitudeLimit(int iDegreesAltLimit);
+    int getInfoAndSettings();
+
 private:
 
     SerXInterface                       *m_pSerx;
@@ -194,8 +199,6 @@ private:
     
     int     sendCommand(const char *pszCmd, char *pszResult, int nExpectedResultLen);
     int     readResponse(char *szRespBuffer, int nBytesToRead);
-
-    int     getInfoAndSettings();
 
     const char m_aszSlewRateNames[IOPTRON_NB_SLEW_SPEEDS][IOPTRON_SLEW_NAME_LENGHT] = { "1x", "2x", "8x", "16x",  "64x", "128x", "256x"};
 
