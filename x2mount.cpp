@@ -262,7 +262,7 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAlt", true);
 		dx->setEnabled("pushButton_7", true);  // set location from TSX->mount
 		dx->setEnabled("pushButton_6", true);  // set time/date/timezone from TSX->mount
-		dx->setEnabled("autoDateTime", true);		// set date/time on connect
+		dx->setEnabled("autoDateTime", true);  // set date/time on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
