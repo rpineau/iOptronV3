@@ -29,7 +29,7 @@
 
 // #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
-#define DRIVER_VERSION 1.4
+#define DRIVER_VERSION 1.5
 
 enum iOptron {IOPTRON_OK=0, NOT_CONNECTED, IOPTRON_CANT_CONNECT, IOPTRON_BAD_CMD_RESPONSE, COMMAND_FAILED, IOPTRON_ERROR};
 
