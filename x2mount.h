@@ -231,6 +231,7 @@ private:
 
     int doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
     int doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent);
+    int updateDialogRealtime(X2GUIExchangeInterface* uiex);
 
     void portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const;
 

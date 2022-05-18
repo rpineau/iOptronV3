@@ -233,24 +233,13 @@ int X2Mount::execModalSettingsDialog(void)
 	X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
 	bool bPressedOK = false;
 	char szTmpBuf[SERIAL_BUFFER_SIZE];
-    char szGPSStatus[SERIAL_BUFFER_SIZE];
-    char szTimeSource[SERIAL_BUFFER_SIZE];
     char szUtcOffsetInMins[SERIAL_BUFFER_SIZE];
     char szUtcOffsetReadInMins[SERIAL_BUFFER_SIZE];
-    char szSystemStatus[SERIAL_BUFFER_SIZE];
-    char szTrackingRate[SERIAL_BUFFER_SIZE];
-    char szLatLong[SERIAL_BUFFER_SIZE];
     bool bDaylight = true;  // most of us want daylight all the time.. unless your Ben Franklin
-    bool bAtZero = false;
-    bool bAtParked = false;
-    bool bOkToSlew = false;
-    bool bGPSOrLatLongGood = false;
-    double dParkAz, dParkAlt;
     int iAutoDateTime;
     int iBehavior, iDegreesPastMeridian;
     int iDegreesAltLimit;
-    float fLat;
-    float fLong;
+    double dParkAz, dParkAlt;
 
 	if (NULL == ui) return ERR_POINTER;
 	
@@ -261,21 +250,19 @@ int X2Mount::execModalSettingsDialog(void)
 		return ERR_POINTER;
 	}
 
-    memset(szGPSStatus,0,SERIAL_BUFFER_SIZE);
-    memset(szTimeSource,0,SERIAL_BUFFER_SIZE);
-
     X2MutexLocker ml(GetMutex());
 
 	// Set values in the userinterface
     iAutoDateTime = m_pIniUtil->readInt(PARENT_KEY, AUTO_DATETIME, 0);
     m_bSetAutoTimeData = iAutoDateTime==1?true:false;
+    dx->setChecked("autoDateTime", iAutoDateTime); // set this anyway to indicate our value even if mount isn't connected
 
     if(m_bLinked) {
         dx->setEnabled("parkAz", true);
         dx->setEnabled("parkAlt", true);
 		dx->setEnabled("pushButton_7", true);  // set location from TSX->mount
 		dx->setEnabled("pushButton_6", true);  // set time/date/timezone from TSX->mount
-		dx->setEnabled("autoDateTime", true);		// set date/time on connect
+		dx->setEnabled("autoDateTime", true);  // set date/time on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
@@ -286,37 +273,24 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setPropertyDouble("parkAz", "value", dParkAz);
         dx->setPropertyDouble("parkAlt", "value", dParkAlt);
 
-        m_iOptronV3.getGPSStatusString(szGPSStatus, SERIAL_BUFFER_SIZE);
-        dx->setText("label_kv_1", szGPSStatus);
-        m_iOptronV3.isGPSOrLatLongGood(bGPSOrLatLongGood);
-        if (bGPSOrLatLongGood) {
-            dx->setChecked("checkBox_gps_good", 1);
-        }
-        m_iOptronV3.getTimeSource(szTimeSource, SERIAL_BUFFER_SIZE);
-        dx->setText("label_kv_3", szTimeSource);
-        m_iOptronV3.getUtcOffset(szUtcOffsetInMins);
-        dx->setText("lineEdit_utc", szUtcOffsetInMins);
-        if (strlen(szUtcOffsetInMins) != 0) {
-            dx->setChecked("checkBox_utc_good", 1);
-        }
-        nErr = m_iOptronV3.getDST(bDaylight);
+        nErr = m_iOptronV3.getUtcOffsetAndDST(szUtcOffsetInMins, bDaylight);  // calls :GUT#
         if (nErr) {
             dx->setCurrentIndex("comboBox_dst", 0);
         } else {
             dx->setCurrentIndex("comboBox_dst", bDaylight?1:2);
+            if (dx->currentIndex("comboBox_dst") != 0) {
+                dx->setChecked("checkBox_dst_good", 1);
+            }
+
+            dx->setText("lineEdit_utc", szUtcOffsetInMins);
+            if (strlen(szUtcOffsetInMins) != 0) {
+                dx->setChecked("checkBox_utc_good", 1);
+            }
         }
-        if (dx->currentIndex("comboBox_dst") != 0) {
-            dx->setChecked("checkBox_dst_good", 1);
-        }
-        m_iOptronV3.getAtZeroPosition(bAtZero);  // must be after other checks since position status already set by those calls
-        dx->setChecked("checkBox_z", bAtZero ? 1:0);
-        m_iOptronV3.getAtParkedPositionPassive(bAtParked);
-        dx->setChecked("checkBox_p", bAtParked ? 1:0);
-        m_iOptronV3.getSystemStatusPassive(szSystemStatus, SERIAL_BUFFER_SIZE);
-        dx->setText("label_actual_sys_stat", szSystemStatus);
-        m_iOptronV3.getTrackingStatusPassive(szTrackingRate, SERIAL_BUFFER_SIZE);
-        dx->setText("label_actual_track_rate", szTrackingRate);
-        dx->setChecked("autoDateTime", iAutoDateTime);
+
+        // ========= dynamically set controls based on mount input
+        updateDialogRealtime(dx);
+        // ===end====== dynamically set controls based on mount input
 
         // read and set current values for meridian treatment
         m_iOptronV3.getMeridianTreatment(iBehavior, iDegreesPastMeridian);
@@ -344,24 +318,6 @@ int X2Mount::execModalSettingsDialog(void)
             fflush(LogFile);
         }
 #endif
-        if (dx->isChecked("checkBox_zero_good")) {
-            dx->setEnabled("label_promise_zero", false);  // grey out text for manual checkbox saying that all is good about setting zero position
-            dx->setEnabled("checkBox_zero_done", false);  // and its associated checkbox
-        }
-
-        okToSlew(dx, bOkToSlew);
-        if (bOkToSlew) {
-            dx->setText("calculator_concl", "Good to Slew");
-            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #45629a;");
-        } else {
-            dx->setText("calculator_concl", "Do Not Slew");
-            dx->setPropertyString("calculator_concl", "styleSheet", "color:  #ff0040;");
-        }
-
-        // set lat/long in interface
-        m_iOptronV3.getLocation(fLat, fLong);
-        snprintf(szLatLong, SERIAL_BUFFER_SIZE, "%f/%f", fLat, fLong);
-        dx->setText("label_lat_long_4", szLatLong);
     }
     else {
         dx->setEnabled("parkAz", false);
@@ -376,7 +332,6 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("lineEdit_utc", false); // utc minutes offset
         dx->setEnabled("comboBox_dst", false); // daylight or not
         dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
-        dx->setChecked("autoDateTime", iAutoDateTime); // set this anyway to indicate our value even if mount isn't connected
         dx->setEnabled("altLimit", false);  // cant change altitude limit number
         dx->setEnabled("pushButton_8", false);  // cant set altitude limit period
         dx->setEnabled("meridianFlip", false);  // cant push merdian treatement: flip
@@ -585,13 +540,14 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
     int nErr = SB_OK;
-    double dParkAz, dParkAlt, dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
+    double dParkAz, dParkAlt, dTimezoneFromTSX, dUTCOffsetInMins;
     int iAltLimit, iMeridianBehavior, iMeridianDegrees;
     bool doMeridianStuff = true;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bOk = false;
     bool bInDST = true;  // most of the time its summer when we observe the heavens
-    bool bIsGPSGood = false;  // we check GPS
+    bool bIsGPSFunctioning = false;
+    bool bIsGPSReceivingData = false;
 
 #ifdef IOPTRON_X2_DEBUG
     if (LogFile) {
@@ -624,12 +580,17 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 			fflush(LogFile);
 		}
 #endif
-        m_iOptronV3.isGPSGood(bIsGPSGood);
-	    if (bIsGPSGood) {
-            doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  This will overwrite the GPS that was acquired.");
-	    } else {
-            doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  If the GPS gets acquired, this will be overwritten.");
-	    }
+        m_iOptronV3.mountHasFunctioningGPSPassive(bIsGPSFunctioning);
+		m_iOptronV3.isGPSReceivingDataPassive(bIsGPSReceivingData);
+		if (bIsGPSFunctioning) {
+            if (bIsGPSReceivingData) {
+                doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  This will overwrite the GPS that was acquired.");
+            } else {
+                doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  If the GPS gets acquired, this will be overwritten.");
+            }
+        } else {
+            doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  Seems your GPS is absent or not working so be sure this lat/long is accurate.");
+		}
 
 		if(bOk) {
 			// TSX longitude is + going west and - going east, so passing the opposite
@@ -838,10 +799,69 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
                 }
             }
         }
-    } else if (!strcmp(pszEvent, "on_pushButton_8_clicked")) {
-
+	} else if (!strcmp(pszEvent, "on_timer")) {
+	    updateDialogRealtime(uiex);
 	}
     return nErr;
+}
+
+int X2Mount::updateDialogRealtime(X2GUIExchangeInterface* uiex)
+{
+    char szGPSStatus[SERIAL_BUFFER_SIZE];
+    char szTimeSource[SERIAL_BUFFER_SIZE];
+    char szSystemStatus[SERIAL_BUFFER_SIZE];
+    char szLatLong[SERIAL_BUFFER_SIZE];
+    char szTrackingRate[SERIAL_BUFFER_SIZE];
+    bool bAtZero = false;
+    bool bAtParked = false;
+    bool bOkToSlew = false;
+    bool bGPSOrLatLongGood = false;
+    float fLat, fLong;
+
+    memset(szGPSStatus,0,SERIAL_BUFFER_SIZE);
+    memset(szTimeSource,0,SERIAL_BUFFER_SIZE);
+
+    m_iOptronV3.getInfoAndSettings();
+    m_iOptronV3.getGPSStatusStringPassive(szGPSStatus, SERIAL_BUFFER_SIZE);
+    uiex->setText("label_kv_1", szGPSStatus);
+    m_iOptronV3.isGPSOrLatLongGoodPassive(bGPSOrLatLongGood);
+    if (bGPSOrLatLongGood) {
+        uiex->setChecked("checkBox_gps_good", 1);
+    }
+    m_iOptronV3.getTimeSourcePassive(szTimeSource, SERIAL_BUFFER_SIZE);
+    uiex->setText("label_kv_3", szTimeSource);
+
+    m_iOptronV3.getAtZeroPositionPassive(bAtZero);  // must be after other checks since position status already set by those calls
+    uiex->setChecked("checkBox_z", bAtZero ? 1:0);
+    m_iOptronV3.getAtParkedPositionPassive(bAtParked);
+    uiex->setChecked("checkBox_p", bAtParked ? 1:0);
+    m_iOptronV3.getSystemStatusPassive(szSystemStatus, SERIAL_BUFFER_SIZE);
+    uiex->setText("label_actual_sys_stat", szSystemStatus);
+    m_iOptronV3.getTrackingStatusPassive(szTrackingRate, SERIAL_BUFFER_SIZE);
+    uiex->setText("label_actual_track_rate", szTrackingRate);
+
+    uiex->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);  // The Roubal fix
+
+    if (uiex->isChecked("checkBox_zero_good")) {
+        uiex->setEnabled("label_promise_zero", false);  // grey out text for manual checkbox saying that all is good about setting zero position
+        uiex->setEnabled("checkBox_zero_done", false);  // and its associated checkbox
+    }
+
+    // OK TO SLEW UPDATES
+    okToSlew(uiex, bOkToSlew);
+    if (bOkToSlew) {
+        uiex->setText("calculator_concl", "Good to Slew");
+        uiex->setPropertyString("calculator_concl", "styleSheet", "color:  #45629a;");
+    } else {
+        uiex->setText("calculator_concl", "Do Not Slew");
+        uiex->setPropertyString("calculator_concl", "styleSheet", "color:  #ff0040;");
+    }
+
+    // set lat/long in interface
+    m_iOptronV3.getLocationPassive(fLat, fLong);
+    snprintf(szLatLong, SERIAL_BUFFER_SIZE, "%f/%f", fLat, fLong);
+    uiex->setText("label_lat_long_4", szLatLong);
+    return SB_OK;
 }
 
 int X2Mount::doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
@@ -855,7 +875,7 @@ int X2Mount::doConfirmDialogEvents(X2GUIExchangeInterface* uiex, const char* psz
 int X2Mount::establishLink(void)
 {
     int nErr = SB_OK;
-    double dTimezoneFromTSX, dUTCOffsetInMins, dJulianDate;
+    double dTimezoneFromTSX, dUTCOffsetInMins;
     char szTmpBuf[SERIAL_BUFFER_SIZE];
     bool bInDST = true;  // most of the time its summer when we observe the heavens
 
