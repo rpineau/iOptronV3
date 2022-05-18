@@ -840,6 +840,8 @@ int X2Mount::updateDialogRealtime(X2GUIExchangeInterface* uiex)
     m_iOptronV3.getTrackingStatusPassive(szTrackingRate, SERIAL_BUFFER_SIZE);
     uiex->setText("label_actual_track_rate", szTrackingRate);
 
+    uiex->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);  // The Roubal fix
+
     if (uiex->isChecked("checkBox_zero_good")) {
         uiex->setEnabled("label_promise_zero", false);  // grey out text for manual checkbox saying that all is good about setting zero position
         uiex->setEnabled("checkBox_zero_done", false);  // and its associated checkbox
