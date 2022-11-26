@@ -1187,7 +1187,9 @@ int CiOptron::setLocation(float fLat, float fLong)
         //  This command sets the current longitude. Valid data range is [-64,800,000, +64,800,000].
         //  Note: East is positive, and the resolution is 0.01 arc-second.
 
-        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLO%+09d#", ulLongToSend);
+        uint32_t ulLongToSend = fabs(fLong) * 60 * 60 * 100;
+
+        snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLO%c%08u#", fLong >= 0 ? '+' : '-', ulLongToSend);
 
 #if defined IOPTRON_DEBUG
         if (Logfile) {
