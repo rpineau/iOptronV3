@@ -35,8 +35,8 @@
 #define MAX_PORT_NAME_SIZE 120
 
 
-#define IOPTRON_X2_DEBUG    // Define this to have log files
-#define IOPTRON_X2_LOG_LEVEL 1
+// #define IOPTRON_X2_DEBUG    // Define this to have log files
+#define IOPTRON_X2_LOG_LEVEL 0
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM1"

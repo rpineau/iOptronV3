@@ -849,7 +849,7 @@ int CiOptron::gotoZeroPosition() {
 
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::gotoZeroPosition] called \n", getTimestamp());
         fflush(Logfile);
@@ -862,7 +862,7 @@ int CiOptron::gotoZeroPosition() {
     if (nErr)
         return nErr;
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::gotoZeroPosition] finished.  Result: %s\n", getTimestamp(), szResp);
         fflush(Logfile);
@@ -959,7 +959,7 @@ int CiOptron::findZeroPosition() {
 
     int nErr = IOPTRON_OK;
     char szResp[SERIAL_BUFFER_SIZE];
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::calibrateZeroPosition] called \n", getTimestamp());
         fflush(Logfile);
@@ -969,7 +969,7 @@ int CiOptron::findZeroPosition() {
     // Find Zero position / home position
     nErr = sendCommand(":MSH#", szResp, 1);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::calibrateZeroPosition] finished.  Result: %s\n", getTimestamp(), szResp);
         fflush(Logfile);
