@@ -2,13 +2,13 @@
 
 X2Mount::X2Mount(const char* pszDriverSelection,
 				 const int& nInstanceIndex,
-				 SerXInterface					* pSerX,
+				 SerXInterface					    * pSerX,
 				 TheSkyXFacadeForDriversInterface	* pTheSkyX,
 				 SleeperInterface					* pSleeper,
-				 BasicIniUtilInterface			* pIniUtil,
+				 BasicIniUtilInterface			    * pIniUtil,
 				 LoggerInterface					* pLogger,
-				 MutexInterface					* pIOMutex,
-				 TickCountInterface				* pTickCount)
+				 MutexInterface					    * pIOMutex,
+				 TickCountInterface				    * pTickCount)
 {
 
 	m_nPrivateMulitInstanceIndex	= nInstanceIndex;
@@ -128,7 +128,7 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
     X2MutexLocker ml(GetMutex());
 
 	m_CurrentRateIndex = nRateIndex;
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
 	if (LogFile) {
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
@@ -140,7 +140,7 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 
     nErr = m_iOptronV3.startOpenSlew(Dir, nRateIndex);
     if(nErr) {
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
@@ -163,7 +163,7 @@ int X2Mount::endOpenLoopMove(void)
 
     X2MutexLocker ml(GetMutex());
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
 	if (LogFile){
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
@@ -175,7 +175,7 @@ int X2Mount::endOpenLoopMove(void)
 
     nErr = m_iOptronV3.stopOpenLoopMove();
     if(nErr) {
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
@@ -203,7 +203,7 @@ int X2Mount::rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* psz
     int nErr = SB_OK;
     nErr = m_iOptronV3.getRateName(nZeroBasedIndex, pszOut, nOutMaxSize);
     if(nErr) {
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
         if (LogFile) {
             ltime = time(NULL);
             timestamp = asctime(localtime(&ltime));
@@ -524,7 +524,6 @@ int X2Mount::doConfirm(bool &bPressedOK, const char *szText)
 
 void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 {
-
     switch(m_nCurrentDialog) {
         case MAIN:
             doMainDialogEvents(uiex, pszEvent);
@@ -533,8 +532,6 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
             doConfirmDialogEvents(uiex, pszEvent);
             break;
     }
-
-
 }
 
 int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEvent)
@@ -549,7 +546,7 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
     bool bIsGPSFunctioning = false;
     bool bIsGPSReceivingData = false;
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -561,7 +558,7 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
     if(!m_bLinked)
         return ERR_NOLINK ;
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -577,11 +574,18 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] X2Mount::uiEvent on_pushButton_7_clicked (_7 means set location from TSX)\n", timestamp);
+
+            fprintf(LogFile, "[%s] reading lat/lng from TSX -- lat: %f, lng: %f\n",
+                timestamp,
+                m_pTheSkyXForMounts->latitude(),
+                m_pTheSkyXForMounts->longitude());
+
 			fflush(LogFile);
 		}
 #endif
         m_iOptronV3.mountHasFunctioningGPSPassive(bIsGPSFunctioning);
 		m_iOptronV3.isGPSReceivingDataPassive(bIsGPSReceivingData);
+        
 		if (bIsGPSFunctioning) {
             if (bIsGPSReceivingData) {
                 doConfirm(bOk, "Are you sure you want to send the location from TheSky to the mount?  This will overwrite the GPS that was acquired.");
@@ -594,10 +598,10 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
 
 		if(bOk) {
 			// TSX longitude is + going west and - going east, so passing the opposite
-			 nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->latitude(), - m_pTheSkyXForMounts->longitude());
+			nErr = m_iOptronV3.setLocation(m_pTheSkyXForMounts->latitude(), - m_pTheSkyXForMounts->longitude());
 			if(nErr) {
 				snprintf(szTmpBuf,SERIAL_BUFFER_SIZE, "Error setting location: %d", nErr);
-				uiex->messageBox("Error",szTmpBuf);
+				uiex->messageBox("Error", szTmpBuf);
 			}
 		}
 	}
@@ -1315,7 +1319,7 @@ bool X2Mount::isSynced(void)
 
    nErr = m_iOptronV3.isGPSOrLatLongGood(m_bSynced);
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -1382,7 +1386,7 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
         return ERR_CMDFAILED;
     }
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -1739,7 +1743,7 @@ double X2Mount::flipHourAngle() {
     double dFlipHourToRet;
 
     dFlipHourToRet = m_iOptronV3.flipHourAngle();
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
 	if (LogFile) {
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
@@ -1756,7 +1760,7 @@ double X2Mount::flipHourAngle() {
 int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 {
     int nErr = SB_OK;
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -1772,7 +1776,7 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 
     nErr = m_iOptronV3.getLimits(dHoursEast, dHoursWest);
 
-#ifdef IOPTRON_X2_DEBUG
+#if defined IOPTRON_X2_DEBUG && IOPTRON_X2_LOG_LEVEL >= 2
     if (LogFile) {
         ltime = time(NULL);
         timestamp = asctime(localtime(&ltime));
@@ -1816,7 +1820,7 @@ void X2Mount::portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) c
     if (NULL == pszPort)
         return;
 
-    snprintf(pszPort, nMaxSize,DEF_PORT_NAME);
+    snprintf(pszPort, nMaxSize, DEF_PORT_NAME);
 
     if (m_pIniUtil)
         m_pIniUtil->readString(PARENT_KEY, CHILD_KEY_PORT_NAME, pszPort, pszPort, nMaxSize);
