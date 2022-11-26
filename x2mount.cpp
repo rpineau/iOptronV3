@@ -788,6 +788,7 @@ int X2Mount::doMainDialogEvents(X2GUIExchangeInterface* uiex, const char* pszEve
             } else if (uiex->isChecked("meridianFlip")) {
                 iMeridianBehavior = FLIP_AT_POSITION_LIMIT;
             } else {
+                iMeridianBehavior = STOP_AT_POSITION_LIMIT; // set safe default
                 doMeridianStuff = false;
             }
             uiex->propertyInt("merdianDegrees", "value", iMeridianDegrees);
@@ -1067,7 +1068,7 @@ bool X2Mount::isEstablishLinkAbortable(void) const
 
 void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
-	str = "iOptron V3 X2 plugin by Eric Roubal and Rodolphe Pineau";
+	str = "iOptron V3 mount X2 plugin by Eric Roubal and Rodolphe Pineau";
 }
 
 double	X2Mount::driverInfoVersion(void) const
@@ -1089,13 +1090,13 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
 }
 void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 {
-	str = "iOptron CEM120xx V3 Mount";
+	str = "iOptron V3 Mount";
 	
 }
 void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 {
-	str = "iOptron CEM120xx V3 Mount by Eric Roubal and Rodolphe Pineau";
-	
+    str = "iOptron V3 mount X2 plugin by Eric Roubal and Rodolphe Pineau";
+
 }
 void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 {

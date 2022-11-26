@@ -27,7 +27,7 @@
 #include "StopWatch.h"
 
 
-// #define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
+#define IOPTRON_DEBUG 3   // define this to have log files, 1 = bad stuff only, 2 and up.. full debug
 
 #define DRIVER_VERSION 1.5
 
