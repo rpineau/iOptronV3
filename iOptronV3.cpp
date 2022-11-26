@@ -23,7 +23,7 @@ CiOptron::CiOptron() {
     getAtParkTimer.Reset();
 }
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
 void CiOptron::setLogFile(FILE *daFile) {
     Logfile = daFile;
     if (Logfile) {
@@ -50,7 +50,7 @@ int CiOptron::Connect(char *pszPort)
     int iBehavior, iDegreesPastMeridian, iDegreesAltLimit;
     int connectSpeed = 115200;  // default for CEM120xxx
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
     if (Logfile) {
         fprintf(Logfile, "[%s] CiOptron::Connect Called %s\n", getTimestamp(), pszPort);
         fflush(Logfile);
@@ -91,7 +91,7 @@ int CiOptron::Connect(char *pszPort)
         break;
     }
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
     if (Logfile) {
         fprintf(Logfile, "[%s] CiOptron::Connect connected at %d on %s\n", getTimestamp(), connectSpeed, pszPort);
         fflush(Logfile);
@@ -125,7 +125,7 @@ int CiOptron::Connect(char *pszPort)
 
 int CiOptron::Disconnect(void)
 {
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
     if (Logfile) {
         fprintf(Logfile, "[%s] CiOptron::Disconnect Called\n", getTimestamp());
         fflush(Logfile);
@@ -133,7 +133,7 @@ int CiOptron::Disconnect(void)
 #endif
 	if (m_bIsConnected) {
         if(m_pSerx){
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 1
             if (Logfile) {
                 fprintf(Logfile, "[%s] CiOptron::Disconnect closing serial port\n", getTimestamp());
                 fflush(Logfile);
@@ -1136,7 +1136,7 @@ int CiOptron::setLocation(float fLat, float fLong)
     unsigned long ulLatToSend;
     unsigned long ulLongToSend;
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setLocation] called \n", getTimestamp());
         fflush(Logfile);
@@ -1146,21 +1146,21 @@ int CiOptron::setLocation(float fLat, float fLong)
     //  extracting lat:   m_fLat = ((atof(szTmp)-32400000)*0.01)/ 60.0 /60.0;
     ulLatToSend = (fLat * 60.0 * 60.0 / 0.01);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#ifdef IOPTRON_DEBUG
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Latitude from %f to iOptron value %u\n", getTimestamp(), m_fLat, ulLatToSend);
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Latitude from %f to iOptron value %lu\n", getTimestamp(), m_fLat, ulLatToSend);
         fflush(Logfile);
     }
 #endif
 
-    //  Command: “:SLAsTTTTTTTT#”
-    //  Response: “1”
+    //  Command: ":SLAsTTTTTTTT#"
+    //  Response: "1"
     //  This command sets the current latitude. Valid data range is [-32,400,000, +32,400,000].
     //  Note: North is positive, and the resolution is 0.01 arc-second.
 
     snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLA%+09d#", ulLatToSend);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
     if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setLocation] buffer to send for Lat to mount %s\n", getTimestamp(), szCmd);
         fflush(Logfile);
@@ -1175,21 +1175,21 @@ int CiOptron::setLocation(float fLat, float fLong)
         // extracing long:   m_fLong = (atof(szTmp)*0.01)/ 60.0 /60.0;
         ulLongToSend = (fLong * 60.0 * 60.0 / 0.01);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
         if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Longitude from %f to iOptron value %u\n", getTimestamp(), m_fLong, ulLongToSend);
+        fprintf(Logfile, "[%s] [CiOptron::setLocation] setting Longitude from %f to iOptron value %lu\n", getTimestamp(), m_fLong, ulLongToSend);
         fflush(Logfile);
     }
 #endif
         //
-        //  Command: “:SLOsTTTTTTTT#”
-        //  Response: “1”
+        //  Command: ":SLOsTTTTTTTT#"
+        //  Response: "1"
         //  This command sets the current longitude. Valid data range is [-64,800,000, +64,800,000].
         //  Note: East is positive, and the resolution is 0.01 arc-second.
 
         snprintf(szCmd, SERIAL_BUFFER_SIZE, ":SLO%+09d#", ulLongToSend);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
         if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setLocation] buffer to send for Long to mount %s\n", getTimestamp(), szCmd);
         fflush(Logfile);
@@ -1197,7 +1197,7 @@ int CiOptron::setLocation(float fLat, float fLong)
 #endif
         nErr = sendCommand(szCmd, szResp, 1);
 
-#if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
+#if defined IOPTRON_DEBUG
         if (Logfile) {
         fprintf(Logfile, "[%s] [CiOptron::setLocation] done, nErr = %i\n", getTimestamp(), nErr);
         fflush(Logfile);
@@ -2000,19 +2000,19 @@ int CiOptron::getInfoAndSettings()
     }
 #endif
 
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
+    memset(szTmp, 0, SERIAL_BUFFER_SIZE);
     memcpy(szTmp, szResp, 9);
-    m_fLong = (atof(szTmp)*0.01)/ 60.0 /60.0;
+    m_fLong = (atof(szTmp) * 0.01)/ 60.0 /60.0;
 
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp, szResp+9, 8);
+    memset(szTmp, 0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp + 9, 8);
     m_fLat = ((atof(szTmp)-32400000)*0.01)/ 60.0 /60.0;
 
-    memset(szTmp,0, SERIAL_BUFFER_SIZE);
-    memcpy(szTmp, szResp+17, 1);
+    memset(szTmp, 0, SERIAL_BUFFER_SIZE);
+    memcpy(szTmp, szResp + 17, 1);
 #if defined IOPTRON_DEBUG && IOPTRON_DEBUG >= 2
     if (Logfile) {
-        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS status from mount returned is: %s, \n", szTmp);
+        fprintf(Logfile, "[%s] [CiOptron::getInfoAndSettings]  GPS status from mount returned is: %s, \n", getTimestamp(), szTmp);
         fflush(Logfile);
     }
 #endif
