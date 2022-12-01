@@ -526,11 +526,9 @@ int CiOptron::syncTo(double dRaInDecimalHours, double dDecInDecimalDegrees)
     }
 #endif
 
-    if (m_nGPSStatus != GPS_RECEIVING_VALID_DATA)
-        return ERR_CMDFAILED;
-
-    if(!m_bIsConnected)
+    if(!m_bIsConnected) {
         return NOT_CONNECTED;
+    }
 
     nErr = setRaAndDec("CiOptron::syncTo", dRaInDecimalHours, dDecInDecimalDegrees);
     if (nErr) {
