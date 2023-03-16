@@ -262,7 +262,6 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAlt", true);
 		dx->setEnabled("pushButton_7", true);  // set location from TSX->mount
 		dx->setEnabled("pushButton_6", true);  // set time/date/timezone from TSX->mount
-		dx->setEnabled("autoDateTime", true);  // set date/time on connect
 		dx->setEnabled("pushButton_2", true);  // parked button
         dx->setEnabled("pushButton_3", true);  // goto zero button
         dx->setEnabled("pushButton_4", true);  // find zero button
@@ -305,7 +304,6 @@ int X2Mount::execModalSettingsDialog(void)
         m_iOptronV3.getAltitudeLimit(iDegreesAltLimit);
         dx->setPropertyInt("altLimit", "value", iDegreesAltLimit);
 
-        dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
 
         dx->setEnabled("checkBox_zero_done", true); // allow user to check and uncheck this
         dx->setChecked("checkBox_zero_good", m_bHasDoneZeroPosition?1:0);
@@ -324,14 +322,12 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("parkAlt", false);
 		dx->setEnabled("pushButton_7", false);  // set location from TSX->mount
 		dx->setEnabled("pushButton_6", false);  // set time/date/timezone from TSX->mount
-		dx->setEnabled("autoDateTime", false);	// set time and location data on connect
         dx->setEnabled("pushButton_2", false); // parked button
         dx->setEnabled("pushButton_3", false); // goto zero button
         dx->setEnabled("pushButton_4", false); // find zero button
         dx->setEnabled("pushButton_5", false); // goto flats position button
         dx->setEnabled("lineEdit_utc", false); // utc minutes offset
         dx->setEnabled("comboBox_dst", false); // daylight or not
-        dx->setEnabled("pushButtonOK", false);  // cant really hit OK button
         dx->setEnabled("altLimit", false);  // cant change altitude limit number
         dx->setEnabled("pushButton_8", false);  // cant set altitude limit period
         dx->setEnabled("meridianFlip", false);  // cant push merdian treatement: flip
@@ -343,12 +339,14 @@ int X2Mount::execModalSettingsDialog(void)
         dx->setEnabled("label_promise_zero", false);  // grey out text for above checkbox
     }
 
+    dx->setEnabled("autoDateTime", true);    // set time and location data on connect
     dx->setEnabled("checkBox_z", false);  // checkbox indicating if you are at zero position.. output only
     dx->setEnabled("checkBox_p", false);  // checkbox indicating if you are at park position.. output only
     dx->setEnabled("checkBox_gps_good", false); // checkbox telling you GPS is good to slew
     dx->setEnabled("checkBox_utc_good", false); // checkbox telling you UTC offset is set appropriately for slewing
     dx->setEnabled("checkBox_dst_good", false); // checkbox telling you that DST has been set for slewing
     dx->setEnabled("checkBox_zero_good", false); // checkbox confirming you did a seek zero position for slewing
+    dx->setEnabled("pushButtonOK", true);  // cant really hit OK button
 
 	//Display the user interface
     m_nCurrentDialog = MAIN;
@@ -357,39 +355,58 @@ int X2Mount::execModalSettingsDialog(void)
 	
 	//Retreive values from the user interface
 	if (bPressedOK) {
-#ifdef IOPTRON_X2_DEBUG
-        if (LogFile) {
-            ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: do the needful and check if stuff changed\n", timestamp);
-            fflush(LogFile);
-        }
-#endif
-        dx->text("lineEdit_utc", szUtcOffsetReadInMins, SERIAL_BUFFER_SIZE);
-        if (strcmp(szUtcOffsetReadInMins, szUtcOffsetInMins) != 0) {
+        if(m_bLinked) {
 #ifdef IOPTRON_X2_DEBUG
             if (LogFile) {
                 ltime = time(NULL);
                 timestamp = asctime(localtime(&ltime));
                 timestamp[strlen(timestamp) - 1] = 0;
-                fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: utc value changed value is %s.  first character %c\n", timestamp, szUtcOffsetReadInMins, szUtcOffsetReadInMins[0]);
+                fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: do the needful and check if stuff changed\n", timestamp);
                 fflush(LogFile);
             }
 #endif
-            // changed utc offset
-            if (atoi(szUtcOffsetReadInMins) > 780 || atoi(szUtcOffsetReadInMins) < -720) {
-                // out of range,..
-                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Valid values for UTC offset are -720 to +780");
-                dx->messageBox("Error", szTmpBuf);
-            } else if (szUtcOffsetReadInMins[0] != '+' && szUtcOffsetReadInMins[0] != '-') {
-                snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "You must prefix your offset with a + or - sign");
-                dx->messageBox("Error", szTmpBuf);
-            } else {
-                m_iOptronV3.setUtcOffset(szUtcOffsetReadInMins);
+            dx->text("lineEdit_utc", szUtcOffsetReadInMins, SERIAL_BUFFER_SIZE);
+            if (strcmp(szUtcOffsetReadInMins, szUtcOffsetInMins) != 0) {
+#ifdef IOPTRON_X2_DEBUG
+                if (LogFile) {
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: utc value changed value is %s.  first character %c\n", timestamp, szUtcOffsetReadInMins, szUtcOffsetReadInMins[0]);
+                    fflush(LogFile);
+                }
+#endif
+                // changed utc offset
+                if (atoi(szUtcOffsetReadInMins) > 780 || atoi(szUtcOffsetReadInMins) < -720) {
+                    // out of range,..
+                    snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "Valid values for UTC offset are -720 to +780");
+                    dx->messageBox("Error", szTmpBuf);
+                } else if (szUtcOffsetReadInMins[0] != '+' && szUtcOffsetReadInMins[0] != '-') {
+                    snprintf(szTmpBuf, SERIAL_BUFFER_SIZE, "You must prefix your offset with a + or - sign");
+                    dx->messageBox("Error", szTmpBuf);
+                } else {
+                    m_iOptronV3.setUtcOffset(szUtcOffsetReadInMins);
+                }
             }
-        }
-        if (dx->currentIndex("comboBox_dst") != 0) {
+            if (dx->currentIndex("comboBox_dst") != 0) {
+#ifdef IOPTRON_X2_DEBUG
+                if (LogFile) {
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: dst value set.  Value read is %i\n", timestamp, dx->currentIndex("comboBox_dst"));
+                    fflush(LogFile);
+                }
+#endif
+                if (dx->currentIndex("comboBox_dst") == 1 && !bDaylight) {
+                    // change to daylight
+                    m_iOptronV3.setDST(true);
+                } else if (dx->currentIndex("comboBox_dst") == 2 && bDaylight) {
+                    // change to standard
+                    m_iOptronV3.setDST(false);
+                }
+            }
+
 #ifdef IOPTRON_X2_DEBUG
             if (LogFile) {
                 ltime = time(NULL);
@@ -399,41 +416,26 @@ int X2Mount::execModalSettingsDialog(void)
                 fflush(LogFile);
             }
 #endif
-            if (dx->currentIndex("comboBox_dst") == 1 && !bDaylight) {
-                // change to daylight
-                m_iOptronV3.setDST(true);
-            } else if (dx->currentIndex("comboBox_dst") == 2 && bDaylight) {
-                // change to standard
-                m_iOptronV3.setDST(false);
+
+            if (dx->isChecked("checkBox_zero_done")) {
+                m_bHasDoneZeroPosition = true;
+#ifdef IOPTRON_X2_DEBUG
+                if (LogFile) {
+                    ltime = time(NULL);
+                    timestamp = asctime(localtime(&ltime));
+                    timestamp[strlen(timestamp) - 1] = 0;
+                    fprintf(LogFile, "[%s] execModalSettingsDialog label_promise_zero checked.  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
+                    fflush(LogFile);
+                }
+#endif
+
             }
         }
-
-#ifdef IOPTRON_X2_DEBUG
-        if (LogFile) {
-            ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] execModalSettingsDialog pressedOK: dst value set.  Value read is %i\n", timestamp, dx->currentIndex("comboBox_dst"));
-            fflush(LogFile);
-        }
-#endif
         m_bSetAutoTimeData = (dx->isChecked("autoDateTime") == 0?false:true);
         if(m_pIniUtil){
             m_pIniUtil->writeInt(PARENT_KEY, AUTO_DATETIME, m_bSetAutoTimeData?1:0);
         }
 
-        if (dx->isChecked("checkBox_zero_done")) {
-            m_bHasDoneZeroPosition = true;
-#ifdef IOPTRON_X2_DEBUG
-            if (LogFile) {
-                ltime = time(NULL);
-                timestamp = asctime(localtime(&ltime));
-                timestamp[strlen(timestamp) - 1] = 0;
-                fprintf(LogFile, "[%s] execModalSettingsDialog label_promise_zero checked.  Value of m_bHasDoneZeroPosition: %s\n", timestamp, m_bHasDoneZeroPosition?"true":"false");
-                fflush(LogFile);
-            }
-#endif
-        }
 	}
 	return nErr;
 }
