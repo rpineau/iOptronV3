@@ -24,6 +24,7 @@
 #include "../../licensedinterfaces/parkinterface.h"
 #include "../../licensedinterfaces/unparkinterface.h"
 #include "../../licensedinterfaces/driverslewstoparkpositioninterface.h"
+#include "../../licensedinterfaces/mount/pulseguideinterface2.h"
 
 // Include files for iOptron mount
 #include "iOptronV3.h"
@@ -66,6 +67,7 @@ class X2Mount : public MountDriverInterface
                         ,public X2GUIEventInterface
                         ,public SerialPortParams2Interface
                         ,public DriverSlewsToParkPositionInterface
+						,public PulseGuideInterface2
 {
 public:
 	/*!Standard X2 constructor*/
@@ -147,7 +149,10 @@ public:
 	virtual int								rateCountOpenLoopMove(void) const;
 	virtual int								rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* pszOut, const int& nOutMaxSize);
 	virtual int								rateIndexOpenLoopMove(void);
-	
+
+	//PulseGuideInterface
+	virtual int useOpenLoopMoveInterface(int& nGuideRateIndex, OpenLoopMoveInterface** pOLSI);
+
 	//NeedsRefractionInterface
 	virtual bool							needsRefactionAdjustments(void);
 

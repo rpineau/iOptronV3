@@ -96,6 +96,8 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 		*ppVal = dynamic_cast<AsymmetricalEquatorialInterface*>(this);
 	else if (!strcmp(pszName, OpenLoopMoveInterface_Name))
 		*ppVal = dynamic_cast<OpenLoopMoveInterface*>(this);
+	else if (!strcmp(pszName, PulseGuideInterface2_Name))
+		*ppVal = dynamic_cast<PulseGuideInterface2*>(this);
 	else if (!strcmp(pszName, NeedsRefractionInterface_Name))
 		*ppVal = dynamic_cast<NeedsRefractionInterface*>(this);
 	else if (!strcmp(pszName, ModalSettingsDialogInterface_Name))
@@ -216,6 +218,12 @@ int X2Mount::rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* psz
         return ERR_CMDFAILED;
     }
     return nErr;
+}
+
+int X2Mount::useOpenLoopMoveInterface(int& nGuideRateIndex, OpenLoopMoveInterface** pOLSI)
+{
+	nGuideRateIndex = 0;
+	return queryAbstraction(OpenLoopMoveInterface_Name, (void**)pOLSI);
 }
 
 int X2Mount::rateIndexOpenLoopMove(void)
